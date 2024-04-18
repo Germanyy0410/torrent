@@ -9,11 +9,11 @@ app = Flask(__name__)
 
 def get_ip():
   hostname = socket.gethostname()
-  ip = socket.gethostbyname(hostname)
-  return ip
+  os.environ['CURRENT_IP'] = socket.gethostbyname(hostname)
+  with open('.env', 'w') as env_file:
+    env_file.write(f"CURRENT_IP={os.getenv('CURRENT_IP')}")
 
-os.environ['CURRENT_IP'] = get_ip()
-print(os.environ['CURRENT_IP'])
+get_ip()
 
 # Dictionary to store peer information
 peers = {}
