@@ -13,7 +13,7 @@ def split_file(input_file, part_size, output_dir):
             if not data:
                 break
             part_number += 1
-            output_file = os.path.join(output_dir, f'{part_number}_{file_name}.part')
+            output_file = os.path.join(output_dir, f'{part_number}.part')  # Adjust filename format
             with open(output_file, 'wb') as part:
                 part.write(data)
 
@@ -21,7 +21,7 @@ def split_file(input_file, part_size, output_dir):
 
 def merge_files(input_dir, output_file):
     parts = [part for part in os.listdir(input_dir) if part.endswith('.part')]  # Only select part files
-    parts.sort(key=lambda x: int(x.split('_')[0]))  # Sort the parts numerically
+    parts.sort(key=lambda x: int(os.path.splitext(x)[0]))  # Sort the parts numerically
 
     with open(output_file, 'wb') as f:
         for part in parts:
@@ -32,8 +32,9 @@ def merge_files(input_dir, output_file):
 
     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
 
+# Example usage:
 input_file = 'D:/CN_Ass/input/book/book.pdf'  # Path to the input file
-part_size = 2 * 1024 * 1024  # Size of each part, e.g. 2 MB
+part_size = 1500 * 1024  # Size of each part, e.g. 20 MB
 output_directory = 'input/book'  # Output directory where parts will be saved
 split_file(input_file, part_size, output_directory)
 
