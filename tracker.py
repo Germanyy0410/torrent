@@ -19,34 +19,34 @@ peers = {}
 
 @app.route('/announce', methods=['GET'])
 def announce():
-    # Get parameters from the request
-    info_hash = request.args.get('info_hash')
-    peer_id = request.args.get('peer_id')
-    port = request.args.get('port')
-    ip = request.args.get('ip')
+  # Get parameters from the request
+  info_hash = request.args.get('info_hash')
+  peer_id = request.args.get('peer_id')
+  port = request.args.get('port')
+  ip = request.args.get('ip')
 
-    # Generate peer dictionary key
-    peer_key = hashlib.sha1((info_hash + peer_id).encode()).hexdigest()
+  # Generate peer dictionary key
+  peer_key = hashlib.sha1((info_hash + peer_id).encode()).hexdigest()
 
-    # Update peer information or add new peer
-    if peer_key in peers:
-        peers[peer_key]['port'] = port
-        peers[peer_key]['ip'] = ip
-    else:
-        peers[peer_key] = {
-            'peer_id': peer_id,
-            'port': port,
-            'ip': ip
-        }
-
-    # Generate response
-    response = {
-        'peers': list(peers.values())
+  # Update peer information or add new peer
+  if peer_key in peers:
+    peers[peer_key]['port'] = port
+    peers[peer_key]['ip'] = ip
+  else:
+    peers[peer_key] = {
+        'peer_id': peer_id,
+        'port': port,
+        'ip': ip
     }
 
-    print(json.dumps(response, indent=4))
+  # Generate response
+  response = {
+    'peers': list(peers.values())
+  }
 
-    return jsonify(response)
+  print(json.dumps(response, indent=4))
+
+  return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+  app.run(host='0.0.0.0', port=8080)

@@ -1,8 +1,10 @@
 import os
 
-def split_file(input_file, part_size, output_dir):
+def split_file(input_file, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+    part_size = os.path.getsize(input_file) // 3  # Calculate the part size to split into 4 parts
 
     with open(input_file, 'rb') as f:
         part_number = 0
@@ -30,11 +32,10 @@ def merge_files(input_dir, output_file):
 
     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
 
-input_file = 'D:/CN_Ass/input/book/book.pdf'  # Path to the input file
-part_size = 1500 * 1024  # Size of each part, e.g. 20 MB
-output_directory = 'input/book'  # Output directory where parts will be saved
-split_file(input_file, part_size, output_directory)
+# input_file = 'D:/CN_Ass/input/book/book.pdf'  # Path to the input file
+# output_directory = 'input/book'  # Output directory where parts will be saved
+# split_file(input_file, output_directory)
 
-input_directory = 'D:/CN_Ass/input/book'  # Directory containing the parts
-output_file = 'D:/CN_Ass/input/book/book_merged.pdf'  # Output file after merging
-merge_files(input_directory, output_file)
+# input_directory = 'D:/CN_Ass/input/book'  # Directory containing the parts
+# output_file = 'D:/CN_Ass/input/book/book_merged.pdf'  # Output file after merging
+# merge_files(input_directory, output_file)
