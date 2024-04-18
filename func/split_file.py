@@ -4,8 +4,6 @@ def split_file(input_file, part_size, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    file_name = os.path.splitext(os.path.basename(input_file))[0]  # Extracting the file name without extension
-
     with open(input_file, 'rb') as f:
         part_number = 0
         while True:
@@ -32,7 +30,6 @@ def merge_files(input_dir, output_file):
 
     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
 
-# Example usage:
 input_file = 'D:/CN_Ass/input/book/book.pdf'  # Path to the input file
 part_size = 1500 * 1024  # Size of each part, e.g. 20 MB
 output_directory = 'input/book'  # Output directory where parts will be saved
