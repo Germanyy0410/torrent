@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify # type: ignore
 import hashlib
 import random
 import json
-# from dotenv import load_dotenv # type: ignore
 import os
 import socket
 app = Flask(__name__)
@@ -24,6 +23,7 @@ def announce():
     info_hash = request.args.get('info_hash')
     peer_id = request.args.get('peer_id')
     port = request.args.get('port')
+    ip = request.args.get('ip')
 
     # Generate peer dictionary key
     peer_key = hashlib.sha1((info_hash + peer_id).encode()).hexdigest()
@@ -31,12 +31,12 @@ def announce():
     # Update peer information or add new peer
     if peer_key in peers:
         peers[peer_key]['port'] = port
-        peers[peer_key]['ip'] = request.remote_addr
+        peers[peer_key]['ip'] = ip
     else:
         peers[peer_key] = {
             'peer_id': peer_id,
             'port': port,
-            'ip': request.remote_addr
+            'ip': ip
         }
 
     # Generate response
