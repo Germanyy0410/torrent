@@ -7,4 +7,6 @@ An application created in Computer Network Course - CO3093
 - ```peer_to_peer.py```: Track and download necessary chunks
 
 To install all the required packages, run the following command:
-```pip install -r ref/requirements.txt```
+
+```bash
+pip install -r ref/requirements.txt
