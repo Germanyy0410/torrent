@@ -7,11 +7,12 @@ class FilePart:
         self.file_number = file_number
         self.existed = existed
 
-def get_file_part_status(folder_path):
+def get_file_part_status(folder_path, file_name):
     file_parts = []
+
     for i in range(1, 5):
-        file_name = str(i) + '.part'
-        file_path = os.path.join(folder_path, file_name)
+        file_part = str(i)  + '_' + file_name + '.part'
+        file_path = os.path.join(folder_path, file_part)
         file_parts.append(FilePart(i, os.path.exists(file_path)))
     return file_parts
 
@@ -25,7 +26,6 @@ def download_file(peer_ip, peer_port, server_folder, file_parts):
 
         # Iterate through file parts
         for part in file_parts:
-            time.sleep(1)
             if not part.existed:  # Only download parts that don't exist locally
                 # Send request for the file part
                 client_socket.send(str(part.file_number).encode())
@@ -51,9 +51,12 @@ def download_file(peer_ip, peer_port, server_folder, file_parts):
 # Usage example
 peer_ip = '192.168.227.130'
 peer_port = 1234
-server_folder = '/home/germanyy0410/Desktop/cn/torrent/input/book'
+server_folder = '/home/germanyy0410/Desktop/cn/torrent/input/excel'
 
-file_parts = get_file_part_status('D:/CN_Ass/input/book')
+file_parts = get_file_part_status('D:/CN_Ass/input/excel', 'excel')
+
+for file in file_parts:
+    print(f'{file.file_number}    {file.existed}')
 
 download_file(peer_ip, peer_port, server_folder, file_parts)
 
