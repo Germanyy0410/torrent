@@ -25,6 +25,7 @@ def announce():
   peer_id = request.args.get('peer_id')
   port = request.args.get('port')
   ip = request.args.get('ip')
+  chunks = request.args.get('tracked_chunks')
 
   # Generate peer dictionary key
   peer_key = hashlib.sha1((info_hash + peer_id).encode()).hexdigest()
@@ -37,19 +38,26 @@ def announce():
     peers[peer_key] = {
         'peer_id': peer_id,
         'port': port,
-        'ip': ip
+        'ip': ip,
+        'chunks': chunks
     }
 
   response = {
     'peers': list(peers.values())
   }
 
-  # print(json.dumps(response, indent=4))
   return jsonify(response)
 # ================================================================
 
 
-# ========================= MERGE CHUNKS =========================
+
+
+
+
+
+# ========================= TODO: MERGE CHUNKS =========================
+
+# ================================================================
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=8080)

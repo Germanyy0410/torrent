@@ -1,30 +1,19 @@
-import socket
+class MyClass:
+    def __init__(self, name):
+        self.my_array = []  # Khai báo một thuộc tính mảng rỗng
+        self.name = name
 
-# Tạo socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def add_element(self, element):
+        self.my_array.append(element)  # Thêm phần tử vào mảng
 
-# Địa chỉ IP và số cổng của máy ảo Ubuntu
-host = '192.168.227.130'  # Địa chỉ IP của máy ảo Ubuntu
-port = 1234  # Số cổng mà server đang lắng nghe
-
-# Kết nối đến máy chủ trên máy ảo Ubuntu
-client_socket.connect((host, port))
-
-# Nhập đường dẫn của file trên máy ảo Ubuntu
-file_path = '/home/germanyy0410/logbuf.c'
-
-# Gửi yêu cầu tải file
-client_socket.send(file_path.encode())
-
-# Nhận dữ liệu từ máy chủ (dữ liệu của file)
-with open(file_path.split('/')[-1], 'wb') as file:
-    while True:
-        data = client_socket.recv(1024)
-        if not data:
-            print("File đã được tải về thành công.")
-            break
-        file.write(data)
+    def get_length(self):
+        return len(self.my_array)  # Trả về độ dài của mảng
 
 
-# Đóng kết nối
-client_socket.close()
+def a(Input):
+    # Input.my_array.append(1)
+    print("askjd")
+
+x = MyClass("hi")
+a(x)
+print(len(x.my_array))
