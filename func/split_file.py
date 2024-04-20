@@ -39,6 +39,6 @@ def merge_files(input_dir, output_file):
 # output_directory = 'input/book'  # Output directory where parts will be saved
 # split_file(input_file, output_directory)
 
-input_directory = 'D:/CN_Ass/input/book'  # Directory containing the parts
-output_file = 'D:/CN_Ass/input/book/book_merged.pdf'  # Output file after merging
+input_directory = 'D:/CN_Ass/input/video'  # Directory containing the parts
+output_file = 'D:/CN_Ass/input/video/video_merged.mkv'  # Output file after merging
 merge_files(input_directory, output_file)

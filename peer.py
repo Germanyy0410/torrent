@@ -6,6 +6,7 @@ import socket
 # import peer_to_peer
 import threading
 import json
+import netifaces # type: ignore
 
 load_dotenv()
 os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
@@ -71,7 +72,7 @@ def download_part(peer_ip, peer_port, file_path, receive_path):
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Connect to the peer
-        client_socket.connect((peer_ip, peer_port))
+        client_socket.connect((peer_ip, int(peer_port)))
 
         # Send request for the file part
         client_socket.send(str(file_path).encode('utf-8'))
@@ -117,9 +118,15 @@ def download_file(peer_ip, peer_port, server_folder, chunks, file_name):
 
 #* ======================== CONNECT PEER TO TRACKER ========================
 def get_peer_ip():
-    hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
-    return ip
+    interfaces = netifaces.interfaces()
+    for interface in interfaces:
+        addresses = netifaces.ifaddresses(interface)
+        if netifaces.AF_INET in addresses:
+            for addr_info in addresses[netifaces.AF_INET]:
+                if 'addr' in addr_info:
+                    ip = addr_info['addr']
+                    if ip.startswith('192.168.227.'):
+                        return ip
 
 def get_input_dir():
     return os.path.dirname(os.path.realpath(__file__)) + '/input/'
