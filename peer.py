@@ -108,6 +108,7 @@ def download_file(peer_ip, peer_port, server_folder, chunks, file_name):
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, file_path, receive_path))
             thread.start()
             threads.append(thread)
+            part.status = True
 
     # Wait for all threads to finish
     for thread in threads:

@@ -4,6 +4,7 @@ import random
 import json
 import os
 import socket
+import time
 
 peers = {}
 
@@ -37,8 +38,7 @@ def announce():
 
 	# Update peer information or add new peer
 	if peer_key in peers:
-		peers[peer_key]['port'] = port
-		peers[peer_key]['ip'] = ip
+		peers[peer_key]['chunks'] = chunks
 	else:
 		peers[peer_key] = {
 			'peer_id': peer_id,
@@ -67,3 +67,7 @@ def announce():
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=8080, debug=False)
+
+	while True:
+		update_peers()
+		time.sleep(5)
