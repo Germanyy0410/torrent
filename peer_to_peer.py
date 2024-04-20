@@ -12,16 +12,26 @@ class FilePart:
         self.existed = existed
 
 
-def get_file_part_status(folder_path):
-    file_name = folder_path.split('\\')[-1]
-    file_parts = []
+
+def get_chunk_status(folder_path):
+    file_name = folder_path.split('/')[-1]
+    chunks = []
 
     for i in range(1, 5):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
-        file_parts.append(FilePart(i, os.path.exists(file_path)))
-    return file_parts
+        chunks.append(FilePart(i, os.path.exists(file_path)))
+    return chunks
 
+def get_all_input_chunks_status(folder_path):
+    all_input_chunks = []
+    if os.path.exists(folder_path) and os.path.isdir(folder_path):
+        subfolders = [f.name for f in os.scandir(folder_path) if f.is_dir()]
+
+        for folder in subfolders:
+            all_input_chunks.append(get_chunk_status(os.path.join(f'{folder_path}{folder}')))
+
+    return all_input_chunks
 
 def download_part(peer_ip, peer_port, file_path, receive_path):
     try:
@@ -52,10 +62,10 @@ def download_part(peer_ip, peer_port, file_path, receive_path):
         client_socket.close()
 
 
-def download_file(peer_ip, peer_port, server_folder, file_parts, file_name):
+def download_file(peer_ip, peer_port, server_folder, chunks, file_name):
     threads = []
 
-    for part in file_parts:
+    for part in chunks:
         if not part.existed:  # Only download parts that don't exist locally
             # Create file path
             file_path = os.path.join(f'{server_folder}/{part.file_number}_{file_name}.part')
@@ -74,10 +84,10 @@ peer_ip = '192.168.227.130'
 peer_port = 1234
 
 user_file = input("Please input file name you want to download: ")
-input_folder_path = os.path.dirname(os.path.realpath(__file__)) + '\input\\' + user_file
+input_folder_path = (os.path.dirname(os.path.realpath(__file__)) + '/input/' + user_file).replace('\\', '/')
 server_folder = os.environ['PEER_PATH'] + user_file
 
-file_parts = get_file_part_status(input_folder_path)
-# for file in file_parts:
+chunks = get_chunk_status(input_folder_path)
+# for file in chunks:
 #     print(f'{file.file_number}   {file.existed}')
-download_file(peer_ip, peer_port, server_folder, file_parts, user_file)
+# download_file(peer_ip, peer_port, server_folder, chunks, user_file)
