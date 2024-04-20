@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv # type: ignore
 from datetime import datetime
 import socket
-import peer_to_peer
+# import peer_to_peer
 import threading
 import json
 
@@ -12,7 +12,7 @@ os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
 
 def get_time():
   current_time = datetime.now()
-  formatted_time = current_time.strftime("%d/%m %H:%M:%S")
+  formatted_time = current_time.strftime("%d/%m/%y")
   return formatted_time
 
 # ============================= PEER TO PEER ==============================
@@ -112,52 +112,47 @@ def download_file(peer_ip, peer_port, server_folder, chunks, file_name):
     for thread in threads:
         thread.join()
 
-peer_ip = '192.168.227.130'
-peer_port = 1234
-
-user_file = input("Please input file name you want to download: ")
-input_folder_path = (os.path.dirname(os.path.realpath(__file__)) + '/input/' + user_file).replace('\\', '/')
-server_folder = os.environ['PEER_PATH'] + user_file
-
-# chunks = get_chunk_status(input_folder_path)
-
-# for file in chunks:
-#     print(f'{file.chunk}   {file.status}')
-# download_file(peer_ip, peer_port, server_folder, chunks, user_file)
 # =========================================================================
 
 
 # ======================== CONNECT PEER TO TRACKER ========================
 def get_ip():
-  hostname = socket.gethostname()
-  ip = socket.gethostbyname(hostname)
-  return ip
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
+    return ip
 
 def get_input_dir():
-  return os.path.dirname(os.path.realpath(__file__)) + '/input/'
+    return os.path.dirname(os.path.realpath(__file__)) + '/input/'
 
 def connect_to_tracker():
-  input_data = InputData()
-  get_all_input_chunks_status(input_data, get_input_dir())
-  input_data_json = json.dumps(input_data, indent=2)
+    input_data = InputData()
+    get_all_input_chunks_status(input_data, get_input_dir())
+    input_data_json = json.dumps(input_data.to_dict(), indent=2)
 
-  torrent_info = {
-    "info_hash": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
-    "peer_id": "Ubuntu " + get_time(),
-    "port": 1234,  # Port của peer trên Ubuntu
-    "ip": get_ip(),
-    "tracked_chunks": input_data_json,  # TODO: <-- Add path here
-    "event": "started"
-  }
-  response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
-  return response.json()
+    torrent_info = {
+        "info_hash": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
+        "peer_id": "Ubuntu " + get_time(),
+        "port": 1234,  # Port của peer trên Ubuntu
+        "ip": get_ip(),
+        "tracked_chunks": input_data_json,
+        "event": "started"
+    }
+    response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
+    return response.json()
 # ========================================================================
 
 
-
 if __name__ == "__main__":
-  tracker_response = connect_to_tracker()
-  print("Tracker response:", tracker_response)
-  print(os.path.dirname(os.path.realpath(__file__)))
-  # Tiếp tục xử lý response để thiết lập kết nối với các peer khác và truyền tải dữ liệu
+    tracker_response = connect_to_tracker()
+    print("Tracker response:", tracker_response)
+
+    # chunks = get_chunk_status(input_folder_path)
+    # download_file(peer_ip, peer_port, server_folder, chunks, user_file)
+
+    # peer_ip = '192.168.227.130'
+    # peer_port = 1234
+
+    # user_file = input("Please input file name you want to download: ")
+    # input_folder_path = (os.path.dirname(os.path.realpath(__file__)) + '/input/' + user_file).replace('\\', '/')
+    # server_folder = os.environ['PEER_PATH'] + user_file
 
