@@ -17,7 +17,7 @@ file_path = '/home/germanyy0410/logbuf.c'
 client_socket.send(file_path.encode())
 
 # Nhận dữ liệu từ máy chủ (dữ liệu của file)
-with open('downloaded_file.txt', 'wb') as file:
+with open(file_path.split('/')[-1], 'wb') as file:
     while True:
         data = client_socket.recv(1024)
         if not data:

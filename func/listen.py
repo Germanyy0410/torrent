@@ -27,8 +27,11 @@ while True:
         # Mở file và gửi dữ liệu cho máy khách
         with open(file_path, 'rb') as file:
             data = file.read()
-            client_socket.sendall(data)
-            print("File '{}' đã được gửi thành công.".format(file_path))
+            try:
+                client_socket.sendall(data)
+                print("File '{}' đã được gửi thành công.".format(file_path))
+            except BrokenPipeError:
+                pass
     else:
         print("File '{}' không tồn tại.".format(file_path))
 
