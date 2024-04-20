@@ -34,17 +34,17 @@ cd torrent
 3. Start the tracker:
 
 ```bash
-cd python tracker.py
+python tracker.py
 ```
 
 4. Connect peer(s) to tracker by:
 
  ```bash
-cd python peer.py
+python peer.py
 ```
 
 5. To start download torrent, run:
 
  ```bash
-cd python main.py
+python main.py
 ```
