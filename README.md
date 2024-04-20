@@ -2,14 +2,14 @@
 
 An application created in Computer Network Course - CO3093
 
-## Module description
+## I. Module description
 
 - ```main.py```: Main file to request download Torrent
 - ```tracker.py```: Start local tracker using Flask
 - ```peer.py```: Connect to tracker (run on Ubuntu)
 - ```peer.json```: Store list of peers connected to tracker
 
-## Installation
+## II. Installation
 
 To install all the required packages, run the following command:
 
@@ -17,7 +17,7 @@ To install all the required packages, run the following command:
 pip install -r ref/requirements.txt
 ```
 
-## Getting Started
+## III. Getting Started
 
 ### Clone the repository
 
