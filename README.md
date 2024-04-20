@@ -19,31 +19,31 @@ pip install -r ref/requirements.txt
 
 ## III. Getting Started
 
-### Clone the repository
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/Germanyy0410/torrent.git
 ```
 
-### Naviagte to to the project directory
+2. Naviagte to the project directory:
 
 ```bash
 cd torrent
 ```
 
-### Start the tracker
+3. Start the tracker:
 
 ```bash
 cd python tracker.py
 ```
 
-### Connect peer(s) to tracker by
+4. Connect peer(s) to tracker by:
 
  ```bash
 cd python peer.py
 ```
 
-### To start download torrent, run
+5. To start download torrent, run:
 
  ```bash
 cd python main.py
