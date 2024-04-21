@@ -129,8 +129,10 @@ def get_peer_ip():
                     if ip.startswith('192.168.227.'):
                         return ip
 
+
 def get_input_dir():
     return os.path.dirname(os.path.realpath(__file__)) + '/input/'
+
 
 def connect_to_tracker():
     input_data = InputData()
@@ -139,6 +141,7 @@ def connect_to_tracker():
 
     torrent_info = {
         "info_hash": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
+        "path": get_input_dir(),
         "peer_id": "Ubuntu " + get_time(),
         "port": 1234,  # Port của peer trên Ubuntu
         "ip": get_peer_ip(),
@@ -147,6 +150,7 @@ def connect_to_tracker():
     }
     response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
     return response.json()
+
 
 if __name__ == "__main__":
     tracker_response = connect_to_tracker()
@@ -194,7 +198,20 @@ if __name__ == "__main__":
 
 
 
+#* ============================== MERGE FILES ==============================
+def merge_files(input_dir, output_file):
+    parts = [part for part in os.listdir(input_dir) if part.endswith('.part')]  # Only select part files
+    parts.sort(key=lambda x: int(x.split('_')[0])) # Sort the parts numerically
 
+    with open(output_file, 'wb') as f:
+        for part in parts:
+            part_path = os.path.join(input_dir, part)
+            with open(part_path, 'rb') as p:
+                data = p.read()
+                f.write(data)
+
+    print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
+#* =========================================================================
 
 
 
