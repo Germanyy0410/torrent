@@ -12,9 +12,9 @@ load_dotenv()
 os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
 
 def get_time():
-  current_time = datetime.now()
-  formatted_time = current_time.strftime("%d/%m/%y")
-  return formatted_time
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%d/%m/%y")
+    return formatted_time
 
 #* ================================ CHUNKS =================================
 class InputChunk:
