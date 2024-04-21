@@ -10,7 +10,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((host, port))
 
 # receive_path = 'D:/CN_Ass/func/res.mp4'
-receive_path = '/home/germanyy0410/cn/torrent/output.mp4'
+receive_path = '/home/germanyy0410/cn/torrent/func/output.mp4'
 file_size = int(client_socket.recv(1024).decode())  # Receive file size
 
 try:

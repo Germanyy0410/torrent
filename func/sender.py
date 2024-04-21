@@ -12,7 +12,7 @@ server_socket.bind((host, port))
 server_socket.listen(1)
 
 file_path = 'D:/CN_Ass/func/Inside Part 1.mp4'
-# file_path = '/home/germanyy0410/cn/torrent/func/video.mp4'
+# file_path = '/home/germanyy0410/cn/torrent/func/output.mp4'
 
 file_size = os.path.getsize(file_path)
 
