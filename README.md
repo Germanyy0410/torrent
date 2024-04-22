@@ -1,3 +1,22 @@
+<strong><div align="center">
+VIETNAM NATIONAL UNIVERSITY, HO CHI MINH CITY
+<br />
+UNIVERSITY OF TECHNOLOGY
+<br />
+FACULTY OF COMPUTER SCIENCE AND ENGINEERING
+<br />
+<br />
+
+[![N|Solid](https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HCMUT_official_logo.png/238px-HCMUT_official_logo.png)](https://hcmut.edu.vn/)
+<br /></strong>
+<br />
+
+**Computer Network - Semester 232**
+<br/>
+<br/>
+
+</div>
+
 # Torrent Application
 
 An application created in Computer Network Course - CO3093
