@@ -85,7 +85,7 @@ def get_all_input_pieces_status(InputData, folder_path):
 def calculate_piece_hash_from_part(piece_data):
     sha1 = hashlib.sha1()
     sha1.update(piece_data)
-    return sha1.digest()
+    return sha1.digest().hex()
 
 def read_file(file_path):
     with open(file_path, 'rb') as f:
@@ -135,7 +135,7 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             # Create file path
             sender_file_path = os.path.join(f'{sender_folder}{file_name}/{part.piece_number}_{file_name}.part')
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
-            print(sender_file_path)
+            print(piece_hashes[part.piece_number - 1].hex())
             # Create and start a new thread for each part
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             thread.start()
