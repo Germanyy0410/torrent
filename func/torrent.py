@@ -36,7 +36,7 @@ def create_torrent(file_path, tracker_url, piece_length=512 * 1024):
     with open(file_path.split('.')[0] + '.torrent', 'wb') as torrent_file:
         torrent_file.write(torrent_data)
 
-create_torrent('D:/CN_Ass/input/book/book.pdf', 'http://192.168.1.8:8080/announce')
+create_torrent('D:/CN_Ass/input/video/video.mkv', 'http://192.168.1.8:8080/announce')
 
 def read_torrent(torrent_file_path):
     with open(torrent_file_path, 'rb') as torrent_file:
@@ -57,41 +57,41 @@ def read_torrent(torrent_file_path):
 
     return torrent_info
 
-torrent_file_path = 'D:/CN_Ass/input/book/book.pdf.torrent'
-torrent_info = read_torrent(torrent_file_path)
+# torrent_file_path = 'D:/CN_Ass/input/book/book.pdf.torrent'
+# torrent_info = read_torrent(torrent_file_path)
 
-pieces_bytes = torrent_info['pieces']  # Lấy chuỗi hash từ dữ liệu torrent
-piece_length = torrent_info['piece_length']  # Độ dài của mỗi phần
+# pieces_bytes = torrent_info['pieces']  # Lấy chuỗi hash từ dữ liệu torrent
+# piece_length = torrent_info['piece_length']  # Độ dài của mỗi phần
 
-# Duyệt qua từng phần của chuỗi hash và in ra giá trị hash của từng phần
-for i in range(0, len(pieces_bytes), 20):  # Mỗi giá trị hash có độ dài 20 bytes
-    hash_value = pieces_bytes[i:i+20]  # Lấy một phần của chuỗi hash
-    print("Hash của phần", i // 20 + 1, ":", hash_value.hex())
+# # Duyệt qua từng phần của chuỗi hash và in ra giá trị hash của từng phần
+# for i in range(0, len(pieces_bytes), 20):  # Mỗi giá trị hash có độ dài 20 bytes
+#     hash_value = pieces_bytes[i:i+20]  # Lấy một phần của chuỗi hash
+#     print("Hash của phần", i // 20 + 1, ":", hash_value.hex())
 
 
-def calculate_piece_hash(piece_data):
-    sha1 = hashlib.sha1()  # Khởi tạo đối tượng hash SHA-1
-    sha1.update(piece_data)  # Cập nhật dữ liệu vào đối tượng hash
-    return sha1.digest()  # Trả về giá trị hash dưới dạng bytes
+# def calculate_piece_hash(piece_data):
+#     sha1 = hashlib.sha1()  # Khởi tạo đối tượng hash SHA-1
+#     sha1.update(piece_data)  # Cập nhật dữ liệu vào đối tượng hash
+#     return sha1.digest()  # Trả về giá trị hash dưới dạng bytes
 
-def read_file(file_path):
-    with open(file_path, 'rb') as f:
-        byte_data = f.read()
-    return byte_data
+# def read_file(file_path):
+#     with open(file_path, 'rb') as f:
+#         byte_data = f.read()
+#     return byte_data
 
-piece_data = read_file('D:/CN_Ass/input/book/12_book.part')
-piece_hash = calculate_piece_hash(piece_data)
-print("Giá trị hash của phần file:", piece_hash.hex())
+# piece_data = read_file('D:/CN_Ass/input/book/12_book.part')
+# piece_hash = calculate_piece_hash(piece_data)
+# print("Giá trị hash của phần file:", piece_hash.hex())
 
-def compare_strings(str1, str2):
-    if str1 == str2:
-        return "Hai chuỗi giống nhau."
-    else:
-        return "Hai chuỗi không giống nhau."
+# def compare_strings(str1, str2):
+#     if str1 == str2:
+#         return "Hai chuỗi giống nhau."
+#     else:
+#         return "Hai chuỗi không giống nhau."
 
-# Sử dụng hàm để so sánh hai chuỗi
-string1 = "6e67e85324f0bdabdeb0c929fa0e3fa2a2948916"
-string2 = "6e67e85324f0bdabdeb0c929fa0e3fa2a2948916"
+# # Sử dụng hàm để so sánh hai chuỗi
+# string1 = "6e67e85324f0bdabdeb0c929fa0e3fa2a2948916"
+# string2 = "6e67e85324f0bdabdeb0c929fa0e3fa2a2948916"
 
-result = compare_strings(string1, string2)
-print(result)
+# result = compare_strings(string1, string2)
+# print(result)
