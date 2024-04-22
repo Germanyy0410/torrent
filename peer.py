@@ -3,10 +3,11 @@ import os
 from dotenv import load_dotenv # type: ignore
 from datetime import datetime
 import socket
-# import peer_to_peer
 import threading
 import json
-import netifaces # type: ignore
+
+if __name__ == "__main__":
+    import netifaces # type: ignore
 
 load_dotenv()
 os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
