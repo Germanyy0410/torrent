@@ -1,6 +1,5 @@
 <strong><div align="center">
-VIETNAM NATIONAL UNIVERSITY, HO CHI MINH CITY
-<br />
+HO CHI MINH CITY
 UNIVERSITY OF TECHNOLOGY
 <br />
 FACULTY OF COMPUTER SCIENCE AND ENGINEERING
@@ -16,6 +15,14 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 <br/>
 
 </div>
+
+| No. | Name             | Student ID | Email                          | Contact                                                                                                                                                                                                                     |
+| :-: | ---------------- | :--------: | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1  | Hoàng Tiến Đức      |  2152520   | duc.hoangtien0410@hcmut.edu.vn         | [<img src="https://cdn-icons-png.flaticon.com/512/20/20673.png" align="left" width=20px/>][fb1] [<img src="https://cdn-icons-png.flaticon.com/512/733/733609.png" align="left" width=20px style="margin-left:5px" />][git1] |
+|  2  | Nguyễn Hữu Thọ  |  2153920   | tho.nguyen10032003@hcmut.edu.vn   | [<img src="https://cdn-icons-png.flaticon.com/512/20/20673.png" align="left" width=20px/>][fb2] [<img src="https://cdn-icons-png.flaticon.com/512/733/733609.png" align="left" width=20px style="margin-left:5px" />][git2] |
+
+
+## Requirements
 
 # Torrent Application
 
@@ -67,3 +74,14 @@ python peer.py
  ```bash
 python main.py
 ```
+
+
+
+[fb1]: https://www.facebook.com/cliffteezy0410
+[fb2]: https://www.facebook.com/vanthai.le.9277
+[fb3]: https://www.facebook.com/kazami190125/
+[fb4]: https://www.facebook.com/hailinh.nguyen.359126/
+[git1]: https://github.com/Germanyy0410
+[git2]: https://github.com/iamhuutho
+[git3]: https://github.com/HandsOfGoddest
+[git4]: https://github.com/Halee1505
