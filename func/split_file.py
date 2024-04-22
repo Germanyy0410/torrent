@@ -1,17 +1,14 @@
 import os
 
-def split_file(input_file, output_dir):
+def split_file(input_file, output_dir, part_size=512 * 1024):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    total_size = os.path.getsize(input_file)
-    part_size = total_size // 4  # Calculate the part size to split into 4 parts
-
-    file_name = os.path.splitext(os.path.basename(input_file))[0] # Extracting the file name without extension
+    file_name = os.path.splitext(os.path.basename(input_file))[0]  # Extracting the file name without extension
 
     with open(input_file, 'rb') as f:
         part_number = 0
-        while part_number < 4:
+        while True:
             data = f.read(part_size)
             if not data:
                 break
@@ -21,6 +18,7 @@ def split_file(input_file, output_dir):
                 part.write(data)
 
     print(f"File '{input_file}' has been split into {part_number} parts in '{output_dir}'.")
+
 
 def merge_files(input_dir, output_file):
     parts = [part for part in os.listdir(input_dir) if part.endswith('.part')]  # Only select part files
@@ -35,9 +33,9 @@ def merge_files(input_dir, output_file):
 
     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
 
-input_file = 'D:/CN_Ass/input/book/book.pdf'  # Path to the input file
-output_directory = 'input/book'  # Output directory where parts will be saved
-split_file(input_file, output_directory)
+input_file = 'D:/CN_Ass/input/video/video.mkv'  # Path to the input file
+output_directory = 'input/video'  # Output directory where parts will be saved
+split_file(input_file, output_directory, part_size=512 * 1024)
 
 input_directory = 'D:/CN_Ass/input/video'  # Directory containing the parts
 output_file = 'D:/CN_Ass/input/video/video_merged.mkv'  # Output file after merging

@@ -56,12 +56,14 @@ class InputData:
 
 def get_pieces_status(Input ,folder_path):
     file_name = folder_path.split('/')[-1]
+    parts = [part for part in os.listdir(folder_path) if part.endswith('.part')]  # Only select part files
 
-    for i in range(1, 5):
+    for i in range(1, len(parts) + 1):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
-        Input.pieces.append(InputPiece(i, os.path.exists(file_path)))
 
+        file_size = os.path.getsize(file_path)
+        Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path)))
 
 def get_all_input_pieces_status(InputData, folder_path):
     if os.path.exists(folder_path) and os.path.isdir(folder_path):
