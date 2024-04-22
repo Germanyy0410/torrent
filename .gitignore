@@ -2,5 +2,4 @@ venv/
 .vscode/
 __pycache__/
 func/Inside Part 1.mp4
-func/res.mp4
-func/output.mp4
+func/assets/

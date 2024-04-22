@@ -16,26 +16,34 @@ def get_time():
     formatted_time = current_time.strftime("%d/%m/%y")
     return formatted_time
 
-#* ================================ CHUNKS =================================
-class InputChunk:
-    def __init__(self, chunk_number, status):
-        self.chunk_number = chunk_number
+#* ================================ PIECES =================================
+class InputPiece:
+    def __init__(self, piece_number, size, status):
+        self.piece_number = piece_number
+        self.size = size
         self.status = status
     def to_dict(self):
         return {
-            "chunk_number": self.chunk_number,
+            "piece_number": self.piece_number,
+            "size": self.size,
             "status": self.status
         }
 
 class Input:
     def __init__(self, input_name):
         self.input_name = input_name
-        self.chunks = []
+        self.pieces = []
+        self.input_size = 0
     def to_dict(self):
         return {
             "input_name": self.input_name,
-            "chunks": [chunk.to_dict() for chunk in self.chunks]
+            "pieces": [piece.to_dict() for piece in self.pieces]
         }
+    def get_total_input_size(self):
+        total_size = 0
+        for piece in self.pieces:
+            total_size += int(piece.size)
+        self.input_size = total_size
 
 class InputData:
     def __init__(self):
@@ -45,22 +53,22 @@ class InputData:
             "inputs": [input_obj.to_dict() for input_obj in self.inputs]
         }
 
-def get_chunk_status(Input ,folder_path):
+def get_pieces_status(Input ,folder_path):
     file_name = folder_path.split('/')[-1]
 
     for i in range(1, 5):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
-        Input.chunks.append(InputChunk(i, os.path.exists(file_path)))
+        Input.pieces.append(InputPiece(i, os.path.exists(file_path)))
 
 
-def get_all_input_chunks_status(InputData, folder_path):
+def get_all_input_pieces_status(InputData, folder_path):
     if os.path.exists(folder_path) and os.path.isdir(folder_path):
         subfolders = [f.name for f in os.scandir(folder_path) if f.is_dir()]
 
         for folder in subfolders:
             current_input_file = Input(folder)
-            get_chunk_status(current_input_file, os.path.join(f'{folder_path}{folder}'))
+            get_pieces_status(current_input_file, os.path.join(f'{folder_path}{folder}'))
             InputData.inputs.append(current_input_file)
 #* =========================================================================
 
@@ -95,14 +103,14 @@ def download_part(peer_ip, peer_port, file_path, receive_path):
         client_socket.close()
 
 
-def download_file(peer_ip, peer_port, server_folder, chunks, file_name):
+def download_file(peer_ip, peer_port, server_folder, pieces, file_name):
     threads = []
 
-    for part in chunks:
+    for part in pieces:
         if not part.status:  # Only download parts that don't exist locally
             # Create file path
-            file_path = os.path.join(f'{server_folder}/{part.chunk_number}_{file_name}.part')
-            receive_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.chunk_number}_{file_name}.part')
+            file_path = os.path.join(f'{server_folder}/{part.piece_number}_{file_name}.part')
+            receive_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
             print(receive_path)
             # Create and start a new thread for each part
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, file_path, receive_path))
@@ -136,16 +144,16 @@ def get_input_dir():
 
 def connect_to_tracker():
     input_data = InputData()
-    get_all_input_chunks_status(input_data, get_input_dir())
-    input_data_json = json.dumps(input_data.to_dict(), indent=2)
+    get_all_input_pieces_status(input_data, get_input_dir())
+    input_data_json = json.dumps(input_data.to_dict())
 
     torrent_info = {
         "info_hash": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
         "path": get_input_dir(),
         "peer_id": "Ubuntu " + get_time(),
-        "port": 1234,  # Port của peer trên Ubuntu
+        "port": 1234,
         "ip": get_peer_ip(),
-        "tracked_chunks": input_data_json,
+        "tracked_pieces": input_data_json,
         "event": "started"
     }
     response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
@@ -229,8 +237,8 @@ def merge_files(input_dir, output_file):
 
 
 
-    # chunks = get_chunk_status(input_folder_path)
-    # download_file(peer_ip, peer_port, server_folder, chunks, user_file)
+    # pieces = get_pieces_status(input_folder_path)
+    # download_file(peer_ip, peer_port, server_folder, pieces, user_file)
 
     # peer_ip = '192.168.227.130'
     # peer_port = 1234

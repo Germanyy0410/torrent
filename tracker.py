@@ -31,21 +31,21 @@ def announce():
 	peer_id = request.args.get('peer_id')
 	port = request.args.get('port')
 	ip = request.args.get('ip')
-	chunks = json.loads(request.args.get('tracked_chunks'))
+	pieces = json.loads(request.args.get('tracked_pieces'))
 
 	# Generate peer dictionary key
 	peer_key = hashlib.sha1((info_hash + peer_id).encode()).hexdigest()
 
 	# Update peer information or add new peer
 	if peer_key in peers:
-		peers[peer_key]['chunks'] = chunks
+		peers[peer_key]['pieces'] = pieces
 	else:
 		peers[peer_key] = {
 			'path': path,
 			'peer_id': peer_id,
 			'port': port,
 			'ip': ip,
-			'chunks': chunks
+			'pieces': pieces
 		}
 
 	update_peers()
