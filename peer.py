@@ -27,6 +27,7 @@ class InputPiece:
         self.piece_number = piece_number
         self.size = size
         self.status = status
+        self.piece_hash = 0
     def to_dict(self):
         return {
             "piece_number": self.piece_number,
@@ -96,16 +97,13 @@ def get_all_input_pieces_status(InputData, folder_path):
 
 #* =============================== DOWNLOAD ================================
 
-def calculate_piece_hash_from_part(piece_data):
-    sha1 = hashlib.sha1()
-    sha1.update(piece_data)
-    return sha1.digest().hex()
-
-
-def read_file(file_path):
+def calculate_piece_hash_from_part(file_path):
     with open(file_path, 'rb') as f:
         byte_data = f.read()
-    return byte_data
+
+    sha1 = hashlib.sha1()
+    sha1.update(byte_data)
+    return sha1.digest().hex()
 
 
 def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
@@ -144,15 +142,12 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
     except Exception as e:
         print("Error:", e)
 
+    finally:
+        client_socket.close()
+
 
 def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_name):
     threads = []
-    count = 0
-    # Create a TCP socket
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Connect to the peer
-    client_socket.connect((peer_ip, int(peer_port)))
 
     for part in pieces:
         if not part.status:  # Only download parts that don't exist locally
@@ -161,13 +156,6 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
 
             # Create and start a new thread for each part
-            count += 1
-            if count == 3:
-                for thread in threads:
-                    thread.join()
-                    count = 1
-                threads = []
-
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             thread.start()
             threads.append(thread)
@@ -179,7 +167,6 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
     for thread in threads:
         thread.join()
 
-    client_socket.close()
 #* =========================================================================
 
 
@@ -256,7 +243,7 @@ if __name__ == "__main__":
 
         # Kiểm tra sự tồn tại của file và piece hash
         if os.path.exists(file_path):
-            if calculate_piece_hash_from_part(read_file(file_path)) == piece_hash:
+            if calculate_piece_hash_from_part(file_path) == piece_hash:
                 print("Piece hash mapped.")
 
                 # Mở file và gửi dữ liệu cho máy khách
