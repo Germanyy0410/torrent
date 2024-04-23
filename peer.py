@@ -108,8 +108,14 @@ def read_file(file_path):
     return byte_data
 
 
-def download_part(client_socket, sender_path, receiver_path, piece_hash):
+def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
     try:
+        # Create a TCP socket
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Connect to the peer
+        client_socket.connect((peer_ip, int(peer_port)))
+
         data_to_send = {
             "file_path": str(sender_path),
             "piece_hash": piece_hash.hex()
@@ -155,7 +161,7 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
 
             # Create and start a new thread for each part
-            thread = threading.Thread(target=download_part, args=(client_socket, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
+            thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             thread.start()
             threads.append(thread)
             # download_part(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1])
