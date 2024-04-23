@@ -123,10 +123,10 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
         json_data = json.dumps(data_to_send)
 
         # Send request for the file part
-        client_socket.send(json_data.encode())
+        client_socket.send(json_data.encode('utf-8'))
 
         # Receive piece size
-        piece_size = int(client_socket.recv(1024).decode())
+        piece_size = 512 * 1024
 
         # Receive file data
         with open(receiver_path, 'wb') as file:
@@ -147,7 +147,7 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
 
 def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_name):
     threads = []
-
+    count = 0
     # Create a TCP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -161,6 +161,13 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
 
             # Create and start a new thread for each part
+            count += 1
+            if count == 3:
+                for thread in threads:
+                    thread.join()
+                    count = 1
+                threads = []
+
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             thread.start()
             threads.append(thread)
@@ -237,7 +244,7 @@ if __name__ == "__main__":
         client_socket, client_address = server_socket.accept()
 
         # Nhận đường dẫn của file từ máy khách
-        received_data = client_socket.recv(1024).decode()
+        received_data = client_socket.recv(1024).decode('utf-8')
         parsed_data = json.loads(received_data)
 
         file_path = parsed_data["file_path"].replace('//', '/')
@@ -245,7 +252,7 @@ if __name__ == "__main__":
 
         print("Received file path:", file_path)
 
-        client_socket.send(str(os.path.getsize(file_path)).encode())
+        # client_socket.send(str(os.path.getsize(file_path)).encode('utf-8'))
 
         # Kiểm tra sự tồn tại của file và piece hash
         if os.path.exists(file_path):
