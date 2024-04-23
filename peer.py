@@ -131,13 +131,13 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
             progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
             while True:
                 data = client_socket.recv(1024)
-                if data == "":
+                if not data:
                     break
                 file.write(data)
                 progress_bar.update(len(data))
             progress_bar.close()
 
-        print(f"{receiver_path} downloaded successfully.")
+        print(f"{receiver_path} downloaded successfully.\n")
 
     except Exception as e:
         print("Error:", e)
@@ -148,7 +148,7 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
 
 def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_name):
     threads = []
-
+    count = 1
     for part in pieces:
         if not part.status:  # Only download parts that don't exist locally
             # Create file path
@@ -157,10 +157,9 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
 
             # Create and start a new thread for each part
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
+            part.status = True
             thread.start()
             threads.append(thread)
-            # download_part(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1])
-            part.status = True
             # part.size = os.path.getsize(receiver_path)
 
     # Wait for all threads to finish
