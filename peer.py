@@ -108,14 +108,8 @@ def read_file(file_path):
     return byte_data
 
 
-def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
+def download_part(client_socket, sender_path, receiver_path, piece_hash):
     try:
-        # Create a TCP socket
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Connect to the peer
-        client_socket.connect((peer_ip, int(peer_port)))
-
         data_to_send = {
             "file_path": str(sender_path),
             "piece_hash": piece_hash.hex()
@@ -123,11 +117,10 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
         json_data = json.dumps(data_to_send)
 
         # Send request for the file part
-        client_socket.send(json_data.encode('utf-8'))
+        client_socket.send(json_data.encode())
 
         # Receive piece size
-        piece_size = client_socket.recv(1024)
-        print("Piece size: ", piece_size)
+        piece_size = int(client_socket.recv(1024).decode())
 
         # Receive file data
         with open(receiver_path, 'wb') as file:
@@ -137,31 +130,35 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
                 if data == "":
                     break
                 file.write(data)
+                progress_bar.update(len(data))
+            progress_bar.close()
 
         print(f"{receiver_path} downloaded successfully.")
 
     except Exception as e:
         print("Error:", e)
 
-    finally:
-        # Close the socket
-        client_socket.close()
-
 
 def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_name):
     threads = []
+
+    # Create a TCP socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Connect to the peer
+    client_socket.connect((peer_ip, int(peer_port)))
 
     for part in pieces:
         if not part.status:  # Only download parts that don't exist locally
             # Create file path
             sender_file_path = os.path.join(f'{sender_folder}{file_name}/{part.piece_number}_{file_name}.part')
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
-            print(piece_hashes[part.piece_number - 1].hex())
 
             # Create and start a new thread for each part
-            thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
+            thread = threading.Thread(target=download_part, args=(client_socket, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             thread.start()
             threads.append(thread)
+            # download_part(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1])
             part.status = True
             # part.size = os.path.getsize(receiver_path)
 
@@ -169,6 +166,7 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
     for thread in threads:
         thread.join()
 
+    client_socket.close()
 #* =========================================================================
 
 
@@ -233,7 +231,7 @@ if __name__ == "__main__":
         client_socket, client_address = server_socket.accept()
 
         # Nhận đường dẫn của file từ máy khách
-        received_data = client_socket.recv(1024).decode('utf-8')
+        received_data = client_socket.recv(1024).decode()
         parsed_data = json.loads(received_data)
 
         file_path = parsed_data["file_path"].replace('//', '/')
@@ -241,7 +239,7 @@ if __name__ == "__main__":
 
         print("Received file path:", file_path)
 
-        client_socket.send(os.path.getsize(file_path))
+        client_socket.send(str(os.path.getsize(file_path)).encode())
 
         # Kiểm tra sự tồn tại của file và piece hash
         if os.path.exists(file_path):
