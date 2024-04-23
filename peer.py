@@ -8,6 +8,7 @@ import json
 import hashlib
 import main
 from tqdm import tqdm
+import subprocess
 
 if __name__ == "__main__":
     import netifaces # type: ignore
@@ -23,11 +24,11 @@ def get_time():
 #* ================================ PIECES =================================
 
 class InputPiece:
-    def __init__(self, piece_number, size, status):
+    def __init__(self, piece_number, size, piece_hash, status):
         self.piece_number = piece_number
         self.size = size
         self.status = status
-        self.piece_hash = 0
+        self.piece_hash = piece_hash
     def to_dict(self):
         return {
             "piece_number": self.piece_number,
@@ -80,7 +81,7 @@ def get_pieces_status(Input ,folder_path):
             file_size = os.path.getsize(file_path)
         else:
             file_size = 0
-        Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path)))
+        Input.pieces.append(InputPiece(i, file_size, Input.piece_hashes[i - 1], os.path.exists(file_path)))
 
 
 def get_all_input_pieces_status(InputData, folder_path):
@@ -172,15 +173,15 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
 #* ======================== CONNECT PEER TO TRACKER ========================
 
 def get_peer_ip():
-    interfaces = netifaces.interfaces()
-    for interface in interfaces:
-        addresses = netifaces.ifaddresses(interface)
-        if netifaces.AF_INET in addresses:
-            for addr_info in addresses[netifaces.AF_INET]:
-                if 'addr' in addr_info:
-                    ip = addr_info['addr']
-                    if ip.startswith('192.168.227.'):
-                        return ip
+    try:
+        # Run 'hostname -I' command to get the IP address assigned to the device on the network
+        output = subprocess.check_output(['hostname', '-I']).decode().strip()
+        # Split the output by space and take the first element, which should be the IP address
+        ip_address = output.split()[0]
+    except Exception as e:
+        print("Error:", e)
+        ip_address = None
+    return ip_address
 
 
 def get_input_dir():
