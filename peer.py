@@ -6,6 +6,8 @@ import socket
 import threading
 import json
 import hashlib
+import main
+from tqdm import tqdm
 
 if __name__ == "__main__":
     import netifaces # type: ignore
@@ -19,6 +21,7 @@ def get_time():
     return formatted_time
 
 #* ================================ PIECES =================================
+
 class InputPiece:
     def __init__(self, piece_number, size, status):
         self.piece_number = piece_number
@@ -31,22 +34,24 @@ class InputPiece:
             "status": self.status
         }
 
+
 class Input:
     def __init__(self, input_name):
         self.input_name = input_name
         self.pieces = []
         self.input_size = 0
         self.piece_hashes = []
+        self.info_hash = ''
     def to_dict(self):
         return {
             "input_name": self.input_name,
-            "pieces": [piece.to_dict() for piece in self.pieces]
+            "pieces": [piece.to_dict() for piece in self.pieces],
+            "input_size": self.input_size,
+            "piece_hashes": [piece_hash.to_dict() for piece_hash in self.piece_hashes],
+            "info_hash": self.info_hash
+
         }
-    def get_total_input_size(self):
-        total_size = 0
-        for piece in self.pieces:
-            total_size += int(piece.size)
-        self.input_size = total_size
+
 
 class InputData:
     def __init__(self):
@@ -56,10 +61,16 @@ class InputData:
             "inputs": [input_obj.to_dict() for input_obj in self.inputs]
         }
 
+
 def get_pieces_status(Input ,folder_path):
     file_name = folder_path.split('/')[-1]
-    parts = [part for part in os.listdir(folder_path) if part.endswith('.part')]  # Only select part files
 
+    # Get input[info_hash]
+    torrent_file_path = folder_path + '/' + file_name + '.torrent'
+    Input.info_hash = main.read_torrent(torrent_file_path)["info_hash"]
+
+    # Get piece status
+    parts = [part for part in os.listdir(folder_path) if part.endswith('.part')]  # Only select part files
     for i in range(1, len(parts) + 1):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
@@ -70,6 +81,7 @@ def get_pieces_status(Input ,folder_path):
             file_size = 0
         Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path)))
 
+
 def get_all_input_pieces_status(InputData, folder_path):
     if os.path.exists(folder_path) and os.path.isdir(folder_path):
         subfolders = [f.name for f in os.scandir(folder_path) if f.is_dir()]
@@ -78,19 +90,23 @@ def get_all_input_pieces_status(InputData, folder_path):
             current_input_file = Input(folder)
             get_pieces_status(current_input_file, os.path.join(f'{folder_path}{folder}'))
             InputData.inputs.append(current_input_file)
+
 #* =========================================================================
 
 
 #* =============================== DOWNLOAD ================================
+
 def calculate_piece_hash_from_part(piece_data):
     sha1 = hashlib.sha1()
     sha1.update(piece_data)
     return sha1.digest().hex()
 
+
 def read_file(file_path):
     with open(file_path, 'rb') as f:
         byte_data = f.read()
     return byte_data
+
 
 def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
     try:
@@ -109,8 +125,13 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
         # Send request for the file part
         client_socket.send(json_data.encode('utf-8'))
 
+        # Receive piece size
+        piece_size = client_socket.recv(1024)
+        print("Piece size: ", piece_size)
+
         # Receive file data
         with open(receiver_path, 'wb') as file:
+            progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
             while True:
                 data = client_socket.recv(1024)
                 if data == "":
@@ -136,6 +157,7 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             sender_file_path = os.path.join(f'{sender_folder}{file_name}/{part.piece_number}_{file_name}.part')
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
             print(piece_hashes[part.piece_number - 1].hex())
+
             # Create and start a new thread for each part
             thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             thread.start()
@@ -151,6 +173,7 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
 
 
 #* ======================== CONNECT PEER TO TRACKER ========================
+
 def get_peer_ip():
     interfaces = netifaces.interfaces()
     for interface in interfaces:
@@ -173,12 +196,11 @@ def connect_to_tracker():
     input_data_json = json.dumps(input_data.to_dict())
 
     torrent_info = {
-        "info_hash": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
         "path": get_input_dir(),
         "peer_id": "Ubuntu " + get_time(),
         "port": 1234,
         "ip": get_peer_ip(),
-        "tracked_pieces": input_data_json,
+        "pieces": input_data_json,
         "event": "started"
     }
     response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
@@ -188,10 +210,12 @@ def connect_to_tracker():
 if __name__ == "__main__":
     tracker_response = connect_to_tracker()
     print("Tracker response:", tracker_response)
+
 #* =========================================================================
 
 
 #* ========================== LISTEN FROM CLIENT ===========================
+
 if __name__ == "__main__":
     # Tạo socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -217,33 +241,36 @@ if __name__ == "__main__":
 
         print("Received file path:", file_path)
 
+        client_socket.send(os.path.getsize(file_path))
 
-        # Kiểm tra sự tồn tại của file
+        # Kiểm tra sự tồn tại của file và piece hash
         if os.path.exists(file_path):
             if calculate_piece_hash_from_part(read_file(file_path)) == piece_hash:
                 print("Piece hash mapped.")
+
+                # Mở file và gửi dữ liệu cho máy khách
+                with open(file_path, 'rb') as file:
+                    data = file.read()
+                    try:
+                        client_socket.sendall(data)
+                        print("File '{}' đã được gửi thành công.".format(file_path))
+                    except BrokenPipeError:
+                        pass
             else:
                 print("Piece hash not found.")
 
-            # Mở file và gửi dữ liệu cho máy khách
-            with open(file_path, 'rb') as file:
-                data = file.read()
-                try:
-                    client_socket.sendall(data)
-                    print("File '{}' đã được gửi thành công.".format(file_path))
-                except BrokenPipeError:
-                    pass
         else:
             client_socket.sendall("")
             print("File '{}' không tồn tại.".format(file_path))
 
         # Đóng kết nối với máy khách
         client_socket.close()
+
 #* =========================================================================
 
 
-
 #* ============================== MERGE FILES ==============================
+
 def merge_files(input_dir, output_file):
     parts = [part for part in os.listdir(input_dir) if part.endswith('.part')]  # Chọn chỉ các file parts
     parts.sort(key=lambda x: int(x.split('_')[0]))  # Sắp xếp các parts theo số thứ tự
@@ -269,6 +296,7 @@ def merge_files(input_dir, output_file):
     else:
         os.remove(output_file)
         print("Cannot merge the parts due to discontinuous numbering.")
+
 #* =========================================================================
 
 

@@ -16,13 +16,6 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 
 </div>
 
-| No. | Name             | Student ID | Email                          | Contact                                                                                                                                                                                                                     |
-| :-: | ---------------- | :--------: | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | Hoàng Tiến Đức      |  2152520   | duc.hoangtien0410@hcmut.edu.vn         | [<img src="https://cdn-icons-png.flaticon.com/512/20/20673.png" align="left" width=20px/>][fb1] [<img src="https://cdn-icons-png.flaticon.com/512/733/733609.png" align="left" width=20px style="margin-left:5px" />][git1] |
-|  2  | Nguyễn Hữu Thọ  |  2153920   | tho.nguyen10032003@hcmut.edu.vn   | [<img src="https://cdn-icons-png.flaticon.com/512/20/20673.png" align="left" width=20px/>][fb2] [<img src="https://cdn-icons-png.flaticon.com/512/733/733609.png" align="left" width=20px style="margin-left:5px" />][git2] |
-
-
-## Requirements
 
 # Torrent Application
 
