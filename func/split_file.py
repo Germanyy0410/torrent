@@ -33,13 +33,13 @@ def merge_files(input_dir, output_file):
 
     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
 
-input_file = 'D:/CN_Ass/input/video/video.mkv'  # Path to the input file
-output_directory = 'input/video'  # Output directory where parts will be saved
-split_file(input_file, output_directory, part_size=512 * 1024)
+# input_file = 'D:/CN_Ass/input/video/video.mkv'  # Path to the input file
+# output_directory = 'input/video'  # Output directory where parts will be saved
+# split_file(input_file, output_directory, part_size=512 * 1024)
 
 
-# input_directory = 'D:/CN_Ass/input/video'  # Directory containing the parts
-# output_file = 'D:/CN_Ass/input/video/video_merged.mkv'  # Output file after merging
-# merge_files(input_directory, output_file)
+input_directory = 'D:/CN_Ass/input/video'  # Directory containing the parts
+output_file = 'D:/CN_Ass/input/video/video_merged.mkv'  # Output file after merging
+merge_files(input_directory, output_file)
 
 # def calculate_chunk():

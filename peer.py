@@ -167,8 +167,8 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             # part.size = os.path.getsize(receiver_path)
 
     # Wait for all threads to finish
-    # for thread in threads:
-    #     thread.join()
+    for thread in threads:
+        thread.join()
 
 #* =========================================================================
 

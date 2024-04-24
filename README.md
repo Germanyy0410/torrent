@@ -17,6 +17,14 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 </div>
 
 
+# Up-coming Tasks
+
+- Download từ nhiều peers
+- Xoá các file ```.part```, tự generate mỗi khi run code
+- Upload file (seeder)
+- Report
+
+
 # Torrent Application
 
 An application created in Computer Network Course - CO3093
@@ -67,14 +75,3 @@ python peer.py
  ```bash
 python main.py
 ```
-
-
-
-[fb1]: https://www.facebook.com/cliffteezy0410
-[fb2]: https://www.facebook.com/vanthai.le.9277
-[fb3]: https://www.facebook.com/kazami190125/
-[fb4]: https://www.facebook.com/hailinh.nguyen.359126/
-[git1]: https://github.com/Germanyy0410
-[git2]: https://github.com/iamhuutho
-[git3]: https://github.com/HandsOfGoddest
-[git4]: https://github.com/Halee1505
