@@ -89,7 +89,8 @@ def get_all_input_pieces_status(InputData, folder_path):
 
         for folder in subfolders:
             current_input_file = Input(folder)
-            get_pieces_status(current_input_file, os.path.join(f'{folder_path}{folder}'))
+            total_num_pieces = main.read_torrent(main.get_torrent_path(folder))['num_pieces']
+            get_pieces_status(current_input_file, os.path.join(f'{folder_path}{folder}'), total_num_pieces)
             InputData.inputs.append(current_input_file)
 
 #* =========================================================================
