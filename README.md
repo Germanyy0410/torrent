@@ -16,14 +16,12 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 
 </div>
 
-
 # Up-coming Tasks
 
 - Download từ nhiều peers
 - Xoá các file ```.part```, tự generate mỗi khi run code
 - Upload file (seeder)
 - Report
-
 
 # Torrent Application
 
