@@ -21,12 +21,22 @@ def read_torrent(torrent_file_path):
 
         info_hash = hashlib.sha1(bencode(decoded_data['info'])).digest()
 
+        # Tính toán số lượng phần (pieces)
+        piece_length = decoded_data['info']['piece length']
+        total_length = decoded_data['info']['length']
+
+        # Tính toán số lượng phần và phần còn dư
+        num_pieces = total_length // piece_length
+        if total_length % piece_length != 0:
+            num_pieces += 1
+
         # Trích xuất thông tin cần thiết từ dữ liệu giải mã
         torrent_info = {
             'name': decoded_data['info']['name'],
             'info_hash': info_hash.hex(),
-            'piece_length': decoded_data['info']['piece length'],
-            'length': decoded_data['info']['length'],
+            'piece_length': piece_length,
+            'total_length': total_length,
+            'num_pieces': num_pieces,
             'pieces': decoded_data['info']['pieces'],
             'announce': decoded_data['announce']
         }
@@ -69,6 +79,7 @@ def generate_pieces_hash(pieces_bytes):
 
 #* ========================== START APPLICATION ===========================
 if __name__ == '__main__':
+    os.system('cls')
     torrent_name = input("Please input file name you want to download: ")
     torrent_info = read_torrent(get_torrent_path(torrent_name))
     piece_hashes = generate_pieces_hash(torrent_info['pieces'])
@@ -83,6 +94,6 @@ if __name__ == '__main__':
         input_file.piece_hashes = piece_hashes
         input_file.input_size = get_total_file_size(torrent_info)
 
-        peer.get_pieces_status(input_file, get_input_path(torrent_name))
+        peer.get_pieces_status(input_file, get_input_path(torrent_name), total_num_pieces=torrent_info["num_pieces"])
         peer.download_file(p["ip"], p["port"], p["path"], input_file.pieces, input_file.piece_hashes, torrent_name)
 #* ========================================================================

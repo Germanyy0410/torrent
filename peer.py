@@ -9,6 +9,7 @@ import hashlib
 import main
 from tqdm import tqdm
 import subprocess
+import concurrent.futures
 
 if __name__ == "__main__":
     import netifaces # type: ignore
@@ -24,11 +25,11 @@ def get_time():
 #* ================================ PIECES =================================
 
 class InputPiece:
-    def __init__(self, piece_number, size, piece_hash, status):
+    def __init__(self, piece_number, size, status):
         self.piece_number = piece_number
         self.size = size
         self.status = status
-        self.piece_hash = piece_hash
+        # self.piece_hash = piece_hash
     def to_dict(self):
         return {
             "piece_number": self.piece_number,
@@ -64,16 +65,14 @@ class InputData:
         }
 
 
-def get_pieces_status(Input ,folder_path):
+def get_pieces_status(Input ,folder_path, total_num_pieces):
     file_name = folder_path.split('/')[-1]
 
     # Get input[info_hash]
     torrent_file_path = folder_path + '/' + file_name + '.torrent'
     Input.info_hash = main.read_torrent(torrent_file_path)["info_hash"]
 
-    # Get piece status
-    parts = [part for part in os.listdir(folder_path) if part.endswith('.part')]  # Only select part files
-    for i in range(1, len(parts) + 1):
+    for i in range(1, total_num_pieces + 1):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
 
@@ -81,7 +80,7 @@ def get_pieces_status(Input ,folder_path):
             file_size = os.path.getsize(file_path)
         else:
             file_size = 0
-        Input.pieces.append(InputPiece(i, file_size, Input.piece_hashes[i - 1], os.path.exists(file_path)))
+        Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path)))
 
 
 def get_all_input_pieces_status(InputData, folder_path):
@@ -125,7 +124,7 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
         client_socket.send(json_data.encode('utf-8'))
 
         # Receive piece size
-        piece_size = 512 * 1024
+        piece_size = int(client_socket.recv(1024).decode('utf-8'))
 
         # Receive file data
         with open(receiver_path, 'wb') as file:
@@ -149,7 +148,7 @@ def download_part(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
 
 def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_name):
     threads = []
-    count = 1
+
     for part in pieces:
         if not part.status:  # Only download parts that don't exist locally
             # Create file path
@@ -157,15 +156,18 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
 
             # Create and start a new thread for each part
-            thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
             part.status = True
-            thread.start()
-            threads.append(thread)
+            # thread = threading.Thread(target=download_part, args=(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1]))
+            # thread.start()
+            # threads.append(thread)
+
+            download_part(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1])
+
             # part.size = os.path.getsize(receiver_path)
 
     # Wait for all threads to finish
-    for thread in threads:
-        thread.join()
+    # for thread in threads:
+    #     thread.join()
 
 #* =========================================================================
 
@@ -239,7 +241,7 @@ if __name__ == "__main__":
 
         print("Received file path:", file_path)
 
-        # client_socket.send(str(os.path.getsize(file_path)).encode('utf-8'))
+        client_socket.send(str(os.path.getsize(file_path)).encode('utf-8'))
 
         # Kiểm tra sự tồn tại của file và piece hash
         if os.path.exists(file_path):
