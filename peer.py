@@ -25,11 +25,11 @@ def get_time():
 #* ================================ PIECES =================================
 
 class InputPiece:
-    def __init__(self, piece_number, size, status):
+    def __init__(self, piece_number, size, status, data):
         self.piece_number = piece_number
         self.size = size
         self.status = status
-        # self.piece_hash = piece_hash
+        self.data = data
     def to_dict(self):
         return {
             "piece_number": self.piece_number,
@@ -52,7 +52,6 @@ class Input:
             "input_size": self.input_size,
             "piece_hashes": [piece_hash.to_dict() for piece_hash in self.piece_hashes],
             "info_hash": self.info_hash
-
         }
 
 
@@ -76,11 +75,13 @@ def get_pieces_status(Input ,folder_path, total_num_pieces):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
 
+        data = ''
+        file_size = 0
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
-        else:
-            file_size = 0
-        Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path)))
+            data = calculate_piece_hash_from_part(file_path)
+
+        Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path), data))
 
 
 def get_all_input_pieces_status(InputData, folder_path):
@@ -177,9 +178,7 @@ def download_file(peer_ip, peer_port, sender_folder, pieces, piece_hashes, file_
 
 def get_peer_ip():
     try:
-        # Run 'hostname -I' command to get the IP address assigned to the device on the network
         output = subprocess.check_output(['hostname', '-I']).decode().strip()
-        # Split the output by space and take the first element, which should be the IP address
         ip_address = output.split()[0]
     except Exception as e:
         print("Error:", e)

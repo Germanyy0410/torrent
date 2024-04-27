@@ -13,7 +13,6 @@ def get_torrent_path(file_name):
 #* ================================ TORRENT ===============================
 def read_torrent(torrent_file_path):
     with open(torrent_file_path, 'rb') as torrent_file:
-        # Đọc dữ liệu từ file torrent
         torrent_data = torrent_file.read()
 
         # Giải mã dữ liệu bằng bencode
@@ -45,7 +44,6 @@ def read_torrent(torrent_file_path):
 
 
 def get_total_file_size(torrent_info):
-    # Lấy danh sách các độ dài của các file từ thông tin torrent
     file_lengths = torrent_info.get('length', [])
     if isinstance(file_lengths, int):
         file_lengths = [file_lengths]
@@ -55,7 +53,6 @@ def get_total_file_size(torrent_info):
 
     if total_size >= 1024:
         kb_value = total_size / 1024
-        # Chuyển đổi sang MB nếu kích thước lớn hơn hoặc bằng 1 MB
         if kb_value >= 1024:
             mb_value = kb_value / 1024
             return str(round(mb_value, 2)) + "MB"
