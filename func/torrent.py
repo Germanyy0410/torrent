@@ -3,40 +3,7 @@ import hashlib
 import json
 import math
 import bencodepy
-
-def create_torrent(file_path, tracker_url, piece_length=512 * 1024):
-    # Đọc nội dung của tập tin
-    with open(file_path, 'rb') as f:
-        file_data = f.read()
-
-    # Tính toán độ dài của tập tin
-    file_size = len(file_data)
-
-    # Tính toán số lượng phần
-    num_pieces = -(-file_size // piece_length)
-
-    # Tính toán hash của từng phần và sắp xếp chúng thành một danh sách
-    piece_hashes = [hashlib.sha1(file_data[i:i+piece_length]).digest() for i in range(0, file_size, piece_length)]
-
-    # Tạo thông tin của torrent
-    torrent_info = {
-        'info': {
-            'name': file_path,
-            'piece length': piece_length,
-            'length': file_size,
-            'pieces': b''.join(piece_hashes)
-        },
-        'announce': tracker_url
-    }
-
-    # Mã hóa thông tin của torrent bằng Bencoding
-    torrent_data = bencode(torrent_info)
-
-    # Lưu dữ liệu của torrent vào file
-    with open(file_path.split('.')[0] + '.torrent', 'wb') as torrent_file:
-        torrent_file.write(torrent_data)
-
-create_torrent('D:/CN_Ass/input/video/video.mkv', 'http://192.168.1.8:8080/announce')
+import os
 
 def read_torrent(torrent_file_path):
     with open(torrent_file_path, 'rb') as torrent_file:
@@ -50,48 +17,106 @@ def read_torrent(torrent_file_path):
         torrent_info = {
             'name': decoded_data['info']['name'],
             'piece_length': decoded_data['info']['piece length'],
-            'length': decoded_data['info']['length'],
-            'pieces': decoded_data['info']['pieces'],
             'announce': decoded_data['announce']
         }
 
-    return torrent_info
+        # Khởi tạo dict lưu trữ tên file và danh sách mã hash của các piece
+        file_piece_hashes = {}
 
-# torrent_file_path = 'D:/CN_Ass/input/book/book.pdf.torrent'
-# torrent_info = read_torrent(torrent_file_path)
+        # Kiểm tra xem torrent có nhiều file hay không
+        if 'files' in decoded_data['info']:
+            # Trường hợp torrent chứa nhiều file
+            file_info_list = decoded_data['info']['files']
+            files = []
+            for file_info in file_info_list:
+                file_path = '/'.join([torrent_info['name']] + file_info['path'].split('/'))
+                file_length = file_info['length']
+                file_num_pieces = file_info['num_pieces']
+                file_pieces = file_info['pieces']
+                file_name = file_info['name']
+                files.append({'path': file_path, 'name': file_name, 'length': file_length, 'num_pieces': file_num_pieces, 'pieces': file_pieces})
 
-# pieces_bytes = torrent_info['pieces']  # Lấy chuỗi hash từ dữ liệu torrent
-# piece_length = torrent_info['piece_length']  # Độ dài của mỗi phần
+                # Lưu trữ tên file và danh sách mã hash của các piece
+                file_piece_hashes[file_name] = [piece['hash'].hex() for piece in file_pieces]
 
-# # Duyệt qua từng phần của chuỗi hash và in ra giá trị hash của từng phần
-# for i in range(0, len(pieces_bytes), 20):  # Mỗi giá trị hash có độ dài 20 bytes
-#     hash_value = pieces_bytes[i:i+20]  # Lấy một phần của chuỗi hash
-#     print("Hash của phần", i // 20 + 1, ":", hash_value.hex())
+            torrent_info['files'] = files
+        else:
+            # Trường hợp torrent chỉ chứa một file
+            file_path = torrent_info['name']
+            file_name = file_path.split('/')[-1]
+            file_length = decoded_data['info']['length']
+            file_num_pieces = -(-file_length // torrent_info['piece_length'])
+            file_pieces = [{'hash': decoded_data['info']['pieces'][i:i+20], 'length': torrent_info['piece_length']} for i in range(0, len(decoded_data['info']['pieces']), 20)]
+            torrent_info['files'] = [{'path': file_path, 'name': file_name, 'length': file_length, 'num_pieces': file_num_pieces, 'pieces': file_pieces}]
 
+            # Lưu trữ tên file và danh sách mã hash của các piece
+            file_piece_hashes[file_name] = [piece['hash'].hex() for piece in file_pieces]
 
-# def calculate_piece_hash(piece_data):
-#     sha1 = hashlib.sha1()  # Khởi tạo đối tượng hash SHA-1
-#     sha1.update(piece_data)  # Cập nhật dữ liệu vào đối tượng hash
-#     return sha1.digest()  # Trả về giá trị hash dưới dạng bytes
+    # Trả về thông tin torrent và dict chứa tên file và danh sách mã hash của các piece
+    return torrent_info, file_piece_hashes
 
-# def read_file(file_path):
-#     with open(file_path, 'rb') as f:
-#         byte_data = f.read()
-#     return byte_data
+def create_torrent(directory_path, tracker_url, piece_length=512 * 1024):
+    # Khởi tạo danh sách các file
+    files = []
 
-# piece_data = read_file('D:/CN_Ass/input/book/12_book.part')
-# piece_hash = calculate_piece_hash(piece_data)
-# print("Giá trị hash của phần file:", piece_hash.hex())
+    # Lặp qua tất cả các file trong thư mục
+    for root, _, filenames in os.walk(directory_path):
+        for filename in filenames:
+            # Đường dẫn tuyệt đối của file
+            file_path = os.path.join(root, filename)
 
-# def compare_strings(str1, str2):
-#     if str1 == str2:
-#         return "Hai chuỗi giống nhau."
-#     else:
-#         return "Hai chuỗi không giống nhau."
+            # Đọc nội dung của file
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
 
-# # Sử dụng hàm để so sánh hai chuỗi
-# string1 = "6e67e85324f0bdabdeb0c929fa0e3fa2a2948916"
-# string2 = "6e67e85324f0bdabdeb0c929fa0e3fa2a2948916"
+            # Tính toán độ dài của file
+            file_size = len(file_data)
 
-# result = compare_strings(string1, string2)
-# print(result)
+            # Tính toán số lượng phần
+            num_pieces = -(-file_size // piece_length)
+
+            # Tính toán hash và kích thước của từng phần và sắp xếp chúng thành một danh sách
+            pieces = []
+            for i in range(0, file_size, piece_length):
+                piece_data = file_data[i:i+piece_length]
+                piece_hash = hashlib.sha1(piece_data).digest()
+                piece_size = len(piece_data)
+                pieces.append({'hash': piece_hash, 'length': piece_size})
+
+            # Thêm thông tin của file vào danh sách
+            file_info = {
+                'path': file_path.replace("\\", "/"),
+                'name': file_path.replace("\\", "/").split('/')[-1],
+                'length': file_size,
+                'pieces': pieces,
+                'num_pieces': num_pieces
+            }
+            files.append(file_info)
+
+    # Tạo thông tin của torrent
+    torrent_info = {
+        'info': {
+            'name': directory_path,
+            'piece length': piece_length,
+            'files': files
+        },
+        'announce': tracker_url
+    }
+
+    # Mã hóa thông tin của torrent bằng Bencoding
+    torrent_data = bencode(torrent_info)
+
+    # Lưu dữ liệu của torrent vào file
+    torrent_file_path = os.path.join(directory_path, directory_path.split('/')[-1] + '.torrent')
+    with open(torrent_file_path, 'wb') as torrent_file:
+        torrent_file.write(torrent_data)
+
+directory_path = 'D:/CN_Ass/input/slides'
+tracker_url = 'http:/10.46.153.20:8080/announce'
+
+create_torrent(directory_path, tracker_url)
+
+# Đọc thông tin từ file torrent và in ra thông tin của mỗi file
+torrent_info, file_piece_hashes = read_torrent(directory_path + '/slides.torrent')
+
+print("All piece hashes:", type(file_piece_hashes))

@@ -24,17 +24,34 @@ def get_time():
 
 #* ================================ PIECES =================================
 
-class InputPiece:
-    def __init__(self, piece_number, size, status, data):
+class Piece:
+    def __init__(self, piece_number, size, status, hash):
         self.piece_number = piece_number
         self.size = size
         self.status = status
-        self.data = data
+        self.hash = hash
     def to_dict(self):
         return {
             "piece_number": self.piece_number,
             "size": self.size,
-            "status": self.status
+            "status": self.status,
+            "hash": self.hash
+        }
+
+class File:
+    def __init__(self, file_name, file_size):
+        self.file_name = file_name
+        self.file_size = file_size
+        self.pieces = []
+        self.info_hash = ""
+        self.piece_hashes = []
+    def to_dict(self):
+        return {
+            "file_name": self.file_name,
+            "file_size": self.file_size,
+            "pieces": [piece.to_dict() for piece in self.pieces],
+            "info_hash": self.info_hash,
+            "piece_hashes": self.piece_hashes,
         }
 
 
@@ -75,13 +92,13 @@ def get_pieces_status(Input ,folder_path, total_num_pieces):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
 
-        data = ""
         file_size = 0
+        hash = ""
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
-            data = calculate_piece_hash_from_part(file_path)
+            hash = generate_piece_hash(file_path)
 
-        Input.pieces.append(InputPiece(i, file_size, os.path.exists(file_path), data))
+        Input.pieces.append(Piece(i, file_size, os.path.exists(file_path), hash))
 
 
 def get_all_input_pieces_status(InputData, folder_path):
@@ -99,7 +116,7 @@ def get_all_input_pieces_status(InputData, folder_path):
 
 #* =============================== DOWNLOAD ================================
 
-def calculate_piece_hash_from_part(file_path):
+def generate_piece_hash(file_path):
     with open(file_path, 'rb') as f:
         byte_data = f.read()
 
@@ -108,36 +125,40 @@ def calculate_piece_hash_from_part(file_path):
     return sha1.digest().hex()
 
 
-def upload_piece(peer_ip, peer_port, sender_path, receiver_path):
+def upload_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes):
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((peer_ip, int(peer_port)))
         print("\nUploading to peer...\n")
 
-        # Send request type
-        req = "upload_request"
-        client_socket.send(req.encode())
+        if generate_piece_hash(sender_path) not in piece_hashes:
+            print("Error: Piece has been modified, cannot upload to peer(s).")
+        else:
 
-        # Send piece path
-        data_to_send=  {
-            "file_path": str(receiver_path)
-        }
-        json_data = json.dumps(data_to_send)
-        client_socket.send(json_data.encode('utf-8'))
+            # Send request type
+            req = "upload_request"
+            client_socket.send(req.encode())
 
-        # Send piece data
-        if os.path.exists(sender_path):
-            with open(sender_path, 'rb') as file:
-                data = file.read()
-                client_socket.sendall(data)
-                print("File '{}' has been uploaded successfully...".format(sender_path))
+            # Send piece path
+            data_to_send=  {
+                "file_path": str(receiver_path)
+            }
+            json_data = json.dumps(data_to_send)
+            client_socket.send(json_data.encode('utf-8'))
+
+            # Send piece data
+            if os.path.exists(sender_path):
+                with open(sender_path, 'rb') as file:
+                    data = file.read()
+                    client_socket.sendall(data)
+                    print("File '{}' has been uploaded successfully...".format(sender_path))
     except Exception as e:
         print("Error:", e)
     finally:
         client_socket.close()
 
 
-def download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
+def download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes):
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((peer_ip, int(peer_port)))
@@ -147,15 +168,13 @@ def download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
 
         data_to_send = {
             "file_path": str(sender_path),
-            "piece_hash": piece_hash.hex()
+            "hash": piece_hashes,
         }
         json_data = json.dumps(data_to_send)
-
-        # Send request for the file part
         client_socket.send(json_data.encode('utf-8'))
 
         # Receive piece size
-        piece_size = int(client_socket.recv(1024).decode('utf-8'))
+        piece_size = int(client_socket.recv(1024).decode())
 
         # Receive file data
         with open(receiver_path, 'wb') as file:
@@ -169,14 +188,19 @@ def download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hash):
             progress_bar.close()
 
         print(f"{receiver_path} downloaded successfully.\n")
+
+        merge_files()
     except Exception as e:
         print("Error:", e)
     finally:
         client_socket.close()
 
 
-def download_file(peer_ip, peer_port, sender_folder, peer_pieces, client_pieces, piece_hashes, file_name):
+def download_file(peer, peer_pieces, client_pieces, piece_hashes, file_name):
     threads = []
+    peer_ip = peer["ip"]
+    peer_port = peer["port"]
+    sender_folder = peer["path"]
 
     for part in client_pieces:
         if not part.status:
@@ -188,7 +212,7 @@ def download_file(peer_ip, peer_port, sender_folder, peer_pieces, client_pieces,
             # thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
             # thread.start()
             # threads.append(thread)
-            download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1])
+            download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes)
         else:
             if not peer_pieces[part.piece_number - 1]["status"]:
                 sender_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
@@ -196,10 +220,10 @@ def download_file(peer_ip, peer_port, sender_folder, peer_pieces, client_pieces,
 
                 peer_pieces[part.piece_number - 1]["status"] = True
 
-                thread = threading.Thread(target=upload_piece, args=(peer_ip, peer_port, sender_path, receiver_path))
+                thread = threading.Thread(target=upload_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes))
                 thread.start()
                 threads.append(thread)
-                # upload_piece(peer_ip, peer_port, sender_path, receiver_path)
+                upload_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes)
 
     # Wait for all threads to finish
     for thread in threads:
@@ -264,38 +288,39 @@ if __name__ == "__main__":
         client_socket, client_address = server_socket.accept()
         client_request = client_socket.recv(1024).decode()
 
+        # Download
         if client_request == 'download_request':
             # Nhận đường dẫn của file từ máy khách
             received_data = client_socket.recv(1024).decode('utf-8')
             parsed_data = json.loads(received_data)
 
             file_path = parsed_data["file_path"].replace('//', '/')
-            piece_hash = parsed_data["piece_hash"]
-
+            piece_hashes = parsed_data["hash"]
             print("Received file path:", file_path)
 
-            client_socket.send(str(os.path.getsize(file_path)).encode('utf-8'))
+            # TODO: Bug
+            client_socket.send(str(os.path.getsize(file_path)).encode())
 
             # Kiểm tra sự tồn tại của file và piece hash
             if os.path.exists(file_path):
-                if calculate_piece_hash_from_part(file_path) == piece_hash:
-                    print("Piece hash mapped.")
+                if generate_piece_hash(file_path) in piece_hashes:
+                    print("Verified: Piece matched.")
 
-                    # Mở file và gửi dữ liệu cho máy khách
                     with open(file_path, 'rb') as file:
                         data = file.read()
                         try:
                             client_socket.sendall(data)
-                            print("File '{}' đã được gửi thành công.".format(file_path))
+                            print("File '{}' has sent successfully.".format(file_path))
                         except BrokenPipeError:
                             pass
                 else:
-                    print("Piece hash not found.")
+                    print("Error: Piece has been modified.")
 
             else:
                 client_socket.sendall("")
                 print("File '{}' không tồn tại.".format(file_path))
 
+        # Upload
         elif client_request == 'upload_request':
             received_data = client_socket.recv(1024).decode('utf-8')
             parsed_data = json.loads(received_data)
