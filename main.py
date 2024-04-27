@@ -77,7 +77,8 @@ def generate_pieces_hash(pieces_bytes):
 #* ========================== START APPLICATION ===========================
 if __name__ == '__main__':
     os.system('cls')
-    torrent_name = input("Please input file name you want to download: ")
+    # torrent_name = input("Please input file name you want to download: ")
+    torrent_name = 'book'
     torrent_info = read_torrent(get_torrent_path(torrent_name))
     piece_hashes = generate_pieces_hash(torrent_info['pieces'])
 
@@ -91,6 +92,8 @@ if __name__ == '__main__':
         input_file.piece_hashes = piece_hashes
         input_file.input_size = get_total_file_size(torrent_info)
 
+        peer_pieces = [input["pieces"] for input in p["pieces"]["inputs"] if input["input_name"] == torrent_name][0]
+
         peer.get_pieces_status(input_file, get_input_path(torrent_name), total_num_pieces=torrent_info["num_pieces"])
-        peer.download_file(p["ip"], p["port"], p["path"], input_file.pieces, input_file.piece_hashes, torrent_name)
+        peer.download_file(p["ip"], p["port"], p["path"], peer_pieces, input_file.pieces, input_file.piece_hashes, torrent_name)
 #* ========================================================================
