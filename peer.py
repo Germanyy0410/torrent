@@ -44,7 +44,7 @@ class Input:
         self.pieces = []
         self.input_size = 0
         self.piece_hashes = []
-        self.info_hash = ''
+        self.info_hash = ""
     def to_dict(self):
         return {
             "input_name": self.input_name,
@@ -75,7 +75,7 @@ def get_pieces_status(Input ,folder_path, total_num_pieces):
         file_part = str(i)  + '_' + file_name + '.part'
         file_path = os.path.join(folder_path, file_part)
 
-        data = ''
+        data = ""
         file_size = 0
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
@@ -185,10 +185,10 @@ def download_file(peer_ip, peer_port, sender_folder, peer_pieces, client_pieces,
             receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
 
             part.status = True
-            thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
-            thread.start()
-            threads.append(thread)
-            # download_part(peer_ip, peer_port, sender_file_path, receiver_path, piece_hashes[part.piece_number - 1])
+            # thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
+            # thread.start()
+            # threads.append(thread)
+            download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1])
         else:
             if not peer_pieces[part.piece_number - 1]["status"]:
                 sender_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
@@ -240,11 +240,6 @@ def connect_to_tracker():
     response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
     return response.json()
 
-
-if __name__ == "__main__":
-    tracker_response = connect_to_tracker()
-    print("Tracker response:", tracker_response)
-
 #* =========================================================================
 
 
@@ -263,6 +258,9 @@ if __name__ == "__main__":
     server_socket.listen(1)
 
     while True:
+        connect_to_tracker()
+        print("Send response to tracker.")
+
         client_socket, client_address = server_socket.accept()
         client_request = client_socket.recv(1024).decode()
 
