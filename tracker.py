@@ -19,6 +19,7 @@ def get_ip():
 def update_peers():
 	with open("peers.json", "w") as file:
 		json.dump(peers, file)
+	print("Updated peers.json")
 
 
 app = Flask(__name__)

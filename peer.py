@@ -215,10 +215,8 @@ def download_file(peer, input: Input, file_name):
         if not slice:
             break
         peer_json += slice
-        print(len(peer_json))
 
-    peer_json = peer_json.decode('utf-8')
-    peer = json.loads(peer_json)
+    peer = json.loads(peer_json.decode('utf-8'))
 
     for file in input.files:
         for part in file.pieces:
@@ -312,8 +310,12 @@ if __name__ == "__main__":
     # Send torrent status to client
     input = main.get_torrent_status(torrent_name)
     inputs = json.dumps(input.to_dict())
-    print(len(inputs))
-    client_socket.sendall(inputs.encode('utf-8'))
+    with open("docs.json", "w") as file:
+        json.dump(inputs, file)
+    with open("docs.json", "r") as file:
+        json_data = file.read()
+
+    client_socket.sendall(json_data.encode('utf-8'))
 
     while True:
         client_request = client_socket.recv(1024).decode()
