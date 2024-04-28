@@ -1,1 +1,8 @@
-{"317c1576bcd2bd507daf3efeb4afc90db8340ebe": {"path": "/home/germanyy0410/cn/torrent/input/", "peer_id": "Ubuntu 28/04/24", "port": "1234", "ip": "172.17.238.44"}}
+{
+  "317c1576bcd2bd507daf3efeb4afc90db8340ebe": {
+    "path": "/home/germanyy0410/cn/torrent/input/",
+    "peer_id": "Ubuntu 28/04/24",
+    "port": "1234",
+    "ip": "172.17.238.44"
+  }
+}

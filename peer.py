@@ -185,6 +185,8 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
                 client_socket.sendall(data)
                 print("File '{}' has been uploaded successfully...".format(sender_path))
 
+    client_socket.close()
+
 
 def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
@@ -227,6 +229,8 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     # TODO: Later
     # merge_files()
+    client_socket.close()
+
 
 
 def download_file(peer, input: Input, torrent_name):
@@ -270,6 +274,7 @@ def download_file(peer, input: Input, torrent_name):
 
     # for thread in threads:
     #     thread.join()
+    client_socket.close()
 
 #* =========================================================================
 
@@ -326,7 +331,6 @@ if __name__ == "__main__":
     connect_to_tracker()
     print("Send response to tracker.")
 
-    client_socket, client_address = server_socket.accept()
 
     # Receive torrent name
     # torrent_name = client_socket.recv(1024).decode()
@@ -337,6 +341,7 @@ if __name__ == "__main__":
     # client_socket.sendall(inputs.encode('utf-8'))
 
     while True:
+        client_socket, client_address = server_socket.accept()
         recv_input_json = client_socket.recv(1024).decode('utf-8')
         print(recv_input_json)
         recv_input = json.loads(recv_input_json)
