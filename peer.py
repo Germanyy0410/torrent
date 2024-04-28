@@ -209,14 +209,14 @@ def download_file(peer, input: Input, file_name):
     client_socket.send(str(file_name).encode())
 
     # Receive torrent status from peer
-    peer_json = client_socket.recv(10E9).decode('utf-8')
-    peer = json.loads(peer_json)
+    # peer_json = client_socket.recv(1000000000).decode('utf-8')
+    # peer_info = json.loads(peer_json)
 
     for file in input.files:
         for part in file.pieces:
             if not part.status:
-                sender_path = os.path.join(f'{sender_folder}{file_name}/{part.piece_number}_{file_name}.part')
-                receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
+                sender_path = os.path.join(f'{sender_folder}{file_name}/parts/{part.piece_number}_{file_name}.part')
+                receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/parts/{part.piece_number}_{file_name}.part')
 
                 # thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
                 # thread.start()
@@ -226,8 +226,8 @@ def download_file(peer, input: Input, file_name):
                 part.status = True
             else:
                 if not peer.files[file][part.piece_number - 1]["status"]:
-                    sender_path = os.path.join(f'D:/CN_Ass/input/{file_name}/{part.piece_number}_{file_name}.part')
-                    receiver_path = os.path.join(f'{sender_folder}{file_name}/{part.piece_number}_{file_name}.part')
+                    sender_path = os.path.join(f'D:/CN_Ass/input/{file_name}/parts/{part.piece_number}_{file_name}.part')
+                    receiver_path = os.path.join(f'{sender_folder}{file_name}/parts/{part.piece_number}_{file_name}.part')
 
                     peer[part.piece_number - 1]["status"] = True
 
@@ -303,14 +303,14 @@ if __name__ == "__main__":
 
     # Send torrent status to client
     input = main.get_torrent_status(torrent_name)
-    inputs = json.dumps(input.to_dict())
-
-    client_socket.sendall(inputs.encode('utf-8'))
+    # inputs = json.dumps(input.to_dict())
+    # client_socket.sendall(inputs.encode('utf-8'))
 
     while True:
         client_request = client_socket.recv(1024).decode()
         # Download
         if client_request == 'download_request':
+            print("This is a download request...")
             # Receive file path & piece hashes
             received_data = client_socket.recv(1024).decode('utf-8')
             parsed_data = json.loads(received_data)
@@ -342,6 +342,7 @@ if __name__ == "__main__":
 
         # Upload
         elif client_request == 'upload_request':
+            print("This is a upload request...")
             received_data = client_socket.recv(1024).decode('utf-8')
             parsed_data = json.loads(received_data)
 
