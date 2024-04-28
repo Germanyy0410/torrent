@@ -126,11 +126,9 @@ if __name__ == '__main__':
         peers = json.load(file)
 
     # torrent_name = input("Please input file name you want to download: ")
-    torrent_name = 'videos'
+    torrent_name = 'slides'
     input = get_torrent_status(torrent_name)
     inputs = json.dumps(input.to_dict())
-    print(len(inputs.encode('utf-8')))
-    print("a")
     # Connect client to peer(s)
     for p in peers.values():
         # input.input_size = get_total_file_size(torrent_info)

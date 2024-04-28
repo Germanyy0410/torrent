@@ -138,10 +138,19 @@ def generate_piece_hash(file_path):
     return sha1.digest().hex()
 
 
-def upload_piece(client_socket, sender_path, receiver_path, piece_hashes):
+def verify_piece(torrent_name, file_name, file_path):
+    torrent_info, piece_hashes = main.read_torrent(main.get_torrent_path(torrent_name))
+
+    if generate_piece_hash(file_path) in piece_hashes[file_name]:
+        return True
+
+    return False
+
+
+def upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_path):
     print("\nUploading to peer...\n")
 
-    if generate_piece_hash(sender_path) not in piece_hashes:
+    if verify_piece(torrent_name, file_name, sender_path) == False:
         print("Error: Piece has been modified, cannot upload to peer(s).")
     else:
 
@@ -164,14 +173,14 @@ def upload_piece(client_socket, sender_path, receiver_path, piece_hashes):
                 print("File '{}' has been uploaded successfully...".format(sender_path))
 
 
-def download_piece(client_socket, sender_path, receiver_path, piece_hashes):
+def download_piece(client_socket, file_name, sender_path, receiver_path):
     req = "download_request"
     client_socket.send(req.encode())
 
     # Send file path & piece hashes
     data_to_send = {
+        "file_name": file_name,
         "file_path": str(sender_path),
-        "hash": piece_hashes,
     }
     json_data = json.dumps(data_to_send)
     client_socket.send(json_data.encode('utf-8'))
@@ -196,7 +205,7 @@ def download_piece(client_socket, sender_path, receiver_path, piece_hashes):
     # merge_files()
 
 
-def download_file(peer, input: Input, file_name):
+def download_file(peer, input: Input, torrent_name):
     threads = []
     peer_ip = peer["ip"]
     peer_port = peer["port"]
@@ -206,7 +215,7 @@ def download_file(peer, input: Input, file_name):
     client_socket.connect((peer_ip, int(peer_port)))
 
     # Send torrent name to peer
-    client_socket.send(str(file_name).encode())
+    client_socket.send(str(torrent_name).encode())
 
     # Receive torrent status from peer
     # peer_json = client_socket.recv(1000000000).decode('utf-8')
@@ -215,27 +224,24 @@ def download_file(peer, input: Input, file_name):
     for file in input.files:
         for part in file.pieces:
             if not part.status:
-                sender_path = os.path.join(f'{sender_folder}{file_name}/parts/{part.piece_number}_{file_name}.part')
-                receiver_path = os.path.join(f'D:/CN_Ass/input/{file_name}/parts/{part.piece_number}_{file_name}.part')
+                sender_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file}_{part.piece_number}.part')
+                receiver_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file}_{part.piece_number}.part')
 
                 # thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
                 # thread.start()
                 # threads.append(thread)
 
-                download_piece(client_socket, sender_path, receiver_path, piece_hashes)
+                download_piece(client_socket, file, sender_path, receiver_path)
                 part.status = True
             else:
-                if not peer.files[file][part.piece_number - 1]["status"]:
-                    sender_path = os.path.join(f'D:/CN_Ass/input/{file_name}/parts/{part.piece_number}_{file_name}.part')
-                    receiver_path = os.path.join(f'{sender_folder}{file_name}/parts/{part.piece_number}_{file_name}.part')
+                sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file}_{part.piece_number}.part')
+                receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file}_{part.piece_number}.part')
 
-                    peer[part.piece_number - 1]["status"] = True
+                # thread = threading.Thread(target=upload_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes))
+                # thread.start()
+                # threads.append(thread)
 
-                    # thread = threading.Thread(target=upload_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes))
-                    # thread.start()
-                    # threads.append(thread)
-
-                    upload_piece(client_socket, sender_path, receiver_path, piece_hashes)
+                upload_piece(client_socket, torrent_name, file, sender_path, receiver_path)
 
     # for thread in threads:
     #     thread.join()
@@ -315,7 +321,7 @@ if __name__ == "__main__":
             received_data = client_socket.recv(1024).decode('utf-8')
             parsed_data = json.loads(received_data)
             file_path = parsed_data["file_path"].replace('//', '/')
-            piece_hashes = parsed_data["hash"]
+            file_name = parsed_data["file_name"]
             print("Received file path:", file_path)
 
             # Send piece size to client
@@ -323,7 +329,7 @@ if __name__ == "__main__":
 
             # Kiểm tra sự tồn tại của file và piece hash
             if os.path.exists(file_path):
-                if generate_piece_hash(file_path) in piece_hashes:
+                if verify_piece(torrent_name, file_name, file_path) == True:
                     print("Verified: Piece matched.")
 
                     with open(file_path, 'rb') as file:
