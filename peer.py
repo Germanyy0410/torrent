@@ -327,7 +327,9 @@ if __name__ == "__main__":
 
     while True:
         recv_input_json = client_socket.recv(1024).decode('utf-8')
+        print(recv_input_json)
         recv_input = json.loads(recv_input_json)
+        print(recv_input)
         client_request = recv_input["request"]
 
         torrent_name = recv_input["torrent_name"]
