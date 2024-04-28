@@ -113,10 +113,12 @@ def create_torrent(directory_path, tracker_url, piece_length=512 * 1024):
 
 directory_path = 'D:/CN_Ass/input/slides'
 tracker_url = 'http:/10.46.153.20:8080/announce'
+directory_path = 'D:/CN_Ass/input/videos'
+tracker_url = 'http:/192.168.1.6:8080/announce'
 
 create_torrent(directory_path, tracker_url)
 
 # Đọc thông tin từ file torrent và in ra thông tin của mỗi file
-torrent_info, file_piece_hashes = read_torrent(directory_path + '/slides.torrent')
+torrent_info, file_piece_hashes = read_torrent(directory_path + '/videos.torrent')
 
 print("All piece hashes:", type(file_piece_hashes))
