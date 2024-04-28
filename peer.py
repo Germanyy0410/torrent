@@ -149,7 +149,13 @@ def verify_piece(torrent_name, file_name, file_path):
     return False
 
 
-def upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_path):
+def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
+    peer_ip = peer["ip"]
+    peer_port = peer["port"]
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((peer_ip, int(peer_port)))
+
     print("\nUploading to peer...\n")
 
     if verify_piece(torrent_name, file_name, sender_path) == False:
@@ -180,7 +186,13 @@ def upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_p
                 print("File '{}' has been uploaded successfully...".format(sender_path))
 
 
-def download_piece(client_socket, torrent_name, file_name, sender_path, receiver_path):
+def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
+    peer_ip = peer["ip"]
+    peer_port = peer["port"]
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((peer_ip, int(peer_port)))
+
     req = "download_request"
     data_to_send_1 = {
         "torrent_name": str(torrent_name),
@@ -244,7 +256,7 @@ def download_file(peer, input: Input, torrent_name):
                 # thread.start()
                 # threads.append(thread)
 
-                download_piece(client_socket, torrent_name, file_name, sender_path, receiver_path)
+                download_piece(peer, torrent_name, file_name, sender_path, receiver_path)
                 part.status = True
             else:
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
@@ -254,11 +266,10 @@ def download_file(peer, input: Input, torrent_name):
                 # thread.start()
                 # threads.append(thread)
 
-                upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_path)
+                upload_piece(peer, torrent_name, file_name, sender_path, receiver_path)
 
     # for thread in threads:
     #     thread.join()
-    client_socket.close()
 
 #* =========================================================================
 
