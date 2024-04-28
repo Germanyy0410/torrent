@@ -6,13 +6,9 @@ import socket
 import threading
 import json
 import hashlib
-import main
 from tqdm import tqdm
 import subprocess
-import concurrent.futures
-
-if __name__ == "__main__":
-    import netifaces # type: ignore
+import main
 
 load_dotenv()
 os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
@@ -39,12 +35,14 @@ class Piece:
         }
 
 class File:
-    def __init__(self, file_name, file_size):
+    def __init__(self, file_name, file_size, num_pieces, status):
         self.file_name = file_name
         self.file_size = file_size
         self.pieces = []
+        self.num_pieces = num_pieces
         self.info_hash = ""
         self.piece_hashes = []
+        self.status = status
     def to_dict(self):
         return {
             "file_name": self.file_name,
@@ -58,10 +56,8 @@ class File:
 class Input:
     def __init__(self, input_name):
         self.input_name = input_name
-        self.pieces = []
-        self.input_size = 0
-        self.piece_hashes = []
-        self.info_hash = ""
+        self.size = 0
+        self.files = []
     def to_dict(self):
         return {
             "input_name": self.input_name,
@@ -81,15 +77,15 @@ class InputData:
         }
 
 
-def get_pieces_status(Input ,folder_path, total_num_pieces):
-    file_name = folder_path.split('/')[-1]
+def get_pieces_status(file ,folder_path):
+    file_name = file.file_name.rsplit(".", 1)[0]
 
-    # Get input[info_hash]
-    torrent_file_path = folder_path + '/' + file_name + '.torrent'
-    Input.info_hash = main.read_torrent(torrent_file_path)["info_hash"]
+    # Get file[info_hash]
+    # torrent_file_path = folder_path + '/' + file_name + '.torrent'
+    # file.info_hash = main.read_torrent(torrent_file_path)["info_hash"]
 
-    for i in range(1, total_num_pieces + 1):
-        file_part = str(i)  + '_' + file_name + '.part'
+    for i in range(1, file.num_pieces + 1):
+        file_part = file_name  + '_' + str(i) + '.part'
         file_path = os.path.join(folder_path, file_part)
 
         file_size = 0
@@ -98,7 +94,7 @@ def get_pieces_status(Input ,folder_path, total_num_pieces):
             file_size = os.path.getsize(file_path)
             hash = generate_piece_hash(file_path)
 
-        Input.pieces.append(Piece(i, file_size, os.path.exists(file_path), hash))
+        file.pieces.append(Piece(i, file_size, os.path.exists(file_path), hash))
 
 
 def get_all_input_pieces_status(InputData, folder_path):
@@ -106,10 +102,23 @@ def get_all_input_pieces_status(InputData, folder_path):
         subfolders = [f.name for f in os.scandir(folder_path) if f.is_dir()]
 
         for folder in subfolders:
-            current_input_file = Input(folder)
-            total_num_pieces = main.read_torrent(main.get_torrent_path(folder))['num_pieces']
-            get_pieces_status(current_input_file, os.path.join(f'{folder_path}{folder}'), total_num_pieces)
-            InputData.inputs.append(current_input_file)
+            input = Input(folder)
+            torrent_info, piece_hashes = main.read_torrent(main.get_torrent_path(folder))
+            input.piece_hashes = piece_hashes
+
+            for file in torrent_info["files"]:
+                if ".torrent" in file["name"]:
+                    break
+
+                file_path = main.get_input_path(folder) + "/" + file["name"]
+                status = False
+                if os.path.exists(file_path):
+                    status = True
+                file_info = File(file["name"], file["length"], file["num_pieces"], status)
+                get_pieces_status(file_info, main.get_input_path(folder) + "/parts/")
+                input.files.append(file_info)
+
+            InputData.inputs.append(input)
 
 #* =========================================================================
 

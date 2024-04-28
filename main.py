@@ -1,8 +1,9 @@
 import json
-import peer
+from peer import *
 import os
 from bcoding import bdecode, bencode
 import hashlib
+import peer
 
 def get_input_path(file_name):
     return (os.path.dirname(os.path.realpath(__file__)) + '/input/' + file_name).replace('\\', '/')
@@ -11,38 +12,6 @@ def get_torrent_path(file_name):
     return get_input_path(file_name) + '/' + file_name + '.torrent'
 
 #* ================================ TORRENT ===============================
-# def read_torrent(torrent_file_path):
-#     with open(torrent_file_path, 'rb') as torrent_file:
-#         torrent_data = torrent_file.read()
-
-#         # Giải mã dữ liệu bằng bencode
-#         decoded_data = bdecode(torrent_data)
-
-#         info_hash = hashlib.sha1(bencode(decoded_data['info'])).digest()
-
-#         # Tính toán số lượng phần (pieces)
-#         piece_length = decoded_data['info']['piece length']
-#         total_length = decoded_data['info']['length']
-
-#         # Tính toán số lượng phần và phần còn dư
-#         num_pieces = total_length // piece_length
-#         if total_length % piece_length != 0:
-#             num_pieces += 1
-
-#         # Trích xuất thông tin cần thiết từ dữ liệu giải mã
-#         torrent_info = {
-#             'name': decoded_data['info']['name'],
-#             'info_hash': info_hash.hex(),
-#             'piece_length': piece_length,
-#             'total_length': total_length,
-#             'num_pieces': num_pieces,
-#             'pieces': decoded_data['info']['pieces'],
-#             'announce': decoded_data['announce']
-#         }
-
-#     return torrent_info
-
-
 def read_torrent(torrent_file_path):
     with open(torrent_file_path, 'rb') as torrent_file:
         # Đọc dữ liệu từ file torrent
@@ -136,14 +105,26 @@ if __name__ == '__main__':
     with open("peers.json", "r") as file:
         peers = json.load(file)
 
+    # Get file(s) info
+    input = Input(torrent_name)
+    input.piece_hashes = piece_hashes
+    for file in torrent_info["files"]:
+        if ".torrent" in file["name"]:
+            break
+
+        file_path = get_input_path(torrent_name) + "/" + file["name"]
+        status = False
+        if os.path.exists(file_path):
+            status = True
+        file_info = File(file["name"], file["length"], file["num_pieces"], status)
+        get_pieces_status(file_info, get_input_path(torrent_name) + "/parts/")
+        input.files.append(file_info)
+
     # Connect client to peer(s)
     for p in peers.values():
-        input_file = peer.Input(torrent_name)
-        input_file.piece_hashes = piece_hashes
-        input_file.input_size = get_total_file_size(torrent_info)
+        # input.input_size = get_total_file_size(torrent_info)
 
         peer_pieces = [input["pieces"] for input in p["pieces"]["inputs"] if input["input_name"] == torrent_name][0]
 
-        peer.get_pieces_status(input_file, get_input_path(torrent_name), total_num_pieces=torrent_info["num_pieces"])
-        peer.download_file(p, peer_pieces, input_file.pieces, input_file.piece_hashes, torrent_name)
+        download_file(p, peer_pieces, input.pieces, input.piece_hashes, torrent_name)
 #* ========================================================================
