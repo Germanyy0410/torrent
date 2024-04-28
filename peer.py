@@ -60,11 +60,13 @@ class Input:
         self.input_name = input_name
         self.size = 0
         self.files = []
+        self.piece_hashes = []
     def to_dict(self):
         return {
             "input_name": self.input_name,
             "input_size": self.size,
             "files": [file.to_dict() for file in self.files],
+            "piece_hashes": [hash.to_dict() for hash in self.piece_hashes]
         }
 
 
@@ -211,6 +213,17 @@ def download_file(peer, peer_pieces, client_pieces, piece_hashes, file_name):
     peer_port = peer["port"]
     sender_folder = peer["path"]
 
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((peer["ip"], int(peer["port"])))
+
+    # Send torrent name to peer
+    client_socket.send(str(file_name).encode())
+
+    # Receive torrent status from peer
+    received_torrent_status = client_socket.recv(1024).decode('utf-8')
+    parsed_status = json.loads(received_torrent_status)
+
+
     for part in client_pieces:
         if not part.status:
             # Create file path
@@ -295,6 +308,16 @@ if __name__ == "__main__":
         print("Send response to tracker.")
 
         client_socket, client_address = server_socket.accept()
+
+        # Receive torrent name
+        torrent_name = client_socket.recv(1024).decode()
+
+        # Send torrent status to client
+        input = main.get_torrent_status(torrent_name)
+        json_input = json.dumps(input)
+        client_socket.send(json_input.encode('utf-8'))
+
+
         client_request = client_socket.recv(1024).decode()
 
         # Download
@@ -307,7 +330,6 @@ if __name__ == "__main__":
             piece_hashes = parsed_data["hash"]
             print("Received file path:", file_path)
 
-            # TODO: Bug
             client_socket.send(str(os.path.getsize(file_path)).encode())
 
             # Kiểm tra sự tồn tại của file và piece hash

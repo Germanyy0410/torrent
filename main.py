@@ -91,25 +91,15 @@ def generate_pieces_hash(pieces_bytes):
         piece_data = pieces_bytes[i:i+20]
         hashes.append(piece_data)
     return hashes
-#* ========================================================================
 
 
-#* ========================== START APPLICATION ===========================
-if __name__ == '__main__':
-    os.system('cls')
-    # torrent_name = input("Please input file name you want to download: ")
-    torrent_name = 'book'
+def get_torrent_status(torrent_name):
     torrent_info, piece_hashes = read_torrent(get_torrent_path(torrent_name))
-
-    # Load peer(s) information
-    with open("peers.json", "r") as file:
-        peers = json.load(file)
-
-    # Get file(s) info
     input = Input(torrent_name)
     input.piece_hashes = piece_hashes
+
     for file in torrent_info["files"]:
-        if ".torrent" in file["name"]:
+        if ".torrent" in file:
             break
 
         file_path = get_input_path(torrent_name) + "/" + file["name"]
@@ -120,11 +110,26 @@ if __name__ == '__main__':
         get_pieces_status(file_info, get_input_path(torrent_name) + "/parts/")
         input.files.append(file_info)
 
+    return input
+
+
+#* ========================================================================
+
+
+#* ========================== START APPLICATION ===========================
+if __name__ == '__main__':
+    os.system('cls')
+    # Load peer(s) information
+    with open("peers.json", "r") as file:
+        peers = json.load(file)
+
+    # torrent_name = input("Please input file name you want to download: ")
+    torrent_name = 'books'
+    input = get_torrent_status(torrent_name)
+
     # Connect client to peer(s)
     for p in peers.values():
         # input.input_size = get_total_file_size(torrent_info)
 
-        peer_pieces = [input["pieces"] for input in p["pieces"]["inputs"] if input["input_name"] == torrent_name][0]
-
-        download_file(p, peer_pieces, input.pieces, input.piece_hashes, torrent_name)
+        download_file(p, input.pieces, input.piece_hashes, torrent_name)
 #* ========================================================================
