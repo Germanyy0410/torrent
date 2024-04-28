@@ -9,6 +9,8 @@ import hashlib
 from tqdm import tqdm
 import subprocess
 import main
+import pickle
+
 
 load_dotenv()
 os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
@@ -66,7 +68,7 @@ class Input:
             "input_name": self.input_name,
             "input_size": self.size,
             "files": [file.to_dict() for file in self.files],
-            "piece_hashes": [hash.to_dict() for hash in self.piece_hashes]
+            "piece_hashes": self.piece_hashes
         }
 
 
@@ -207,7 +209,7 @@ def download_piece(peer_ip, peer_port, sender_path, receiver_path, piece_hashes)
         client_socket.close()
 
 
-def download_file(peer, peer_pieces, client_pieces, piece_hashes, file_name):
+def download_file(peer, piece_hashes, file_name):
     threads = []
     peer_ip = peer["ip"]
     peer_port = peer["port"]
@@ -220,9 +222,8 @@ def download_file(peer, peer_pieces, client_pieces, piece_hashes, file_name):
     client_socket.send(str(file_name).encode())
 
     # Receive torrent status from peer
-    received_torrent_status = client_socket.recv(1024).decode('utf-8')
-    parsed_status = json.loads(received_torrent_status)
-
+    received_serialized__status = client_socket.recv(1024)
+    received_status = pickle.loads(received_serialized__status)
 
     for part in client_pieces:
         if not part.status:
@@ -314,8 +315,8 @@ if __name__ == "__main__":
 
         # Send torrent status to client
         input = main.get_torrent_status(torrent_name)
-        json_input = json.dumps(input)
-        client_socket.send(json_input.encode('utf-8'))
+        serialized_input = pickle.dumps(input)
+        client_socket.send(serialized_input)
 
 
         client_request = client_socket.recv(1024).decode()

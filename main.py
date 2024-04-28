@@ -5,6 +5,7 @@ from bcoding import bdecode, bencode
 import hashlib
 import peer
 
+
 def get_input_path(file_name):
     return (os.path.dirname(os.path.realpath(__file__)) + '/input/' + file_name).replace('\\', '/')
 
@@ -131,5 +132,5 @@ if __name__ == '__main__':
     for p in peers.values():
         # input.input_size = get_total_file_size(torrent_info)
 
-        download_file(p, input.pieces, input.piece_hashes, torrent_name)
+        download_file(p, input.piece_hashes, torrent_name)
 #* ========================================================================
