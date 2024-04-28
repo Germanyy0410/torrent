@@ -341,6 +341,7 @@ if __name__ == "__main__":
     # client_socket.sendall(inputs.encode('utf-8'))
 
     while True:
+        print("Start listening...")
         client_socket, client_address = server_socket.accept()
         recv_input_json = client_socket.recv(1024).decode('utf-8')
         print(recv_input_json)
