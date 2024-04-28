@@ -209,7 +209,15 @@ def download_file(peer, input: Input, file_name):
     client_socket.send(str(file_name).encode())
 
     # Receive torrent status from peer
-    peer_json = client_socket.recv(10000000).decode('utf-8')
+    peer_json = b""
+    while True:
+        slice = client_socket.recv(1024)
+        if not slice:
+            break
+        peer_json += slice
+        print(len(peer_json))
+
+    peer_json = peer_json.decode('utf-8')
     peer = json.loads(peer_json)
 
     for file in input.files:
@@ -304,7 +312,8 @@ if __name__ == "__main__":
     # Send torrent status to client
     input = main.get_torrent_status(torrent_name)
     inputs = json.dumps(input.to_dict())
-    client_socket.send(inputs.encode('utf-8'))
+    print(len(inputs))
+    client_socket.sendall(inputs.encode('utf-8'))
 
     while True:
         client_request = client_socket.recv(1024).decode()
