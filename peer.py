@@ -141,8 +141,10 @@ def generate_piece_hash(file_path):
 def verify_piece(torrent_name, file_name, file_path):
     torrent_info, piece_hashes = main.read_torrent(main.get_torrent_path(torrent_name))
 
-    if generate_piece_hash(file_path) in piece_hashes[file_name]:
-        return True
+    for file in piece_hashes:
+        if file_name in file:
+            if generate_piece_hash(file_path) in piece_hashes[file]:
+                return True
 
     return False
 
@@ -225,33 +227,34 @@ def download_file(peer, input: Input, torrent_name):
     client_socket.connect((peer_ip, int(peer_port)))
 
     # Send torrent name to peer
-    client_socket.send(str(torrent_name).encode())
+    # client_socket.send(str(torrent_name).encode())
 
     # Receive torrent status from peer
     # peer_json = client_socket.recv(1000000000).decode('utf-8')
     # peer_info = json.loads(peer_json)
 
     for file in input.files:
+        file_name = file.file_name.rsplit(".", 1)[0]
         for part in file.pieces:
             if not part.status:
-                sender_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file}_{part.piece_number}.part')
-                receiver_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file}_{part.piece_number}.part')
+                sender_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
+                receiver_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
                 # thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
                 # thread.start()
                 # threads.append(thread)
 
-                download_piece(client_socket, torrent_name, file, sender_path, receiver_path)
+                download_piece(client_socket, torrent_name, file_name, sender_path, receiver_path)
                 part.status = True
             else:
-                sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file}_{part.piece_number}.part')
-                receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file}_{part.piece_number}.part')
+                sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
+                receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
                 # thread = threading.Thread(target=upload_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes))
                 # thread.start()
                 # threads.append(thread)
 
-                upload_piece(client_socket, torrent_name, file, sender_path, receiver_path)
+                upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_path)
 
     # for thread in threads:
     #     thread.join()
@@ -315,10 +318,10 @@ if __name__ == "__main__":
     client_socket, client_address = server_socket.accept()
 
     # Receive torrent name
-    torrent_name = client_socket.recv(1024).decode()
+    # torrent_name = client_socket.recv(1024).decode()
 
     # Send torrent status to client
-    input = main.get_torrent_status(torrent_name)
+    # input = main.get_torrent_status(torrent_name)
     # inputs = json.dumps(input.to_dict())
     # client_socket.sendall(inputs.encode('utf-8'))
 

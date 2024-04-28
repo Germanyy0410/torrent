@@ -100,6 +100,8 @@ def get_torrent_status(torrent_name):
     input = Input(torrent_name)
     input.piece_hashes = piece_hashes
 
+    print(verify_piece(torrent_name, "Chapter_1_v8.0", "D:/CN_Ass/input/slides/parts/Chapter_1_v8.0_10.part"))
+
     for file in torrent_info["files"]:
         if ".torrent" in file:
             break
