@@ -48,8 +48,10 @@ class File:
             "file_name": self.file_name,
             "file_size": self.file_size,
             "pieces": [piece.to_dict() for piece in self.pieces],
+            "num_pieces": self.num_pieces,
             "info_hash": self.info_hash,
             "piece_hashes": self.piece_hashes,
+            "status": self.status,
         }
 
 
@@ -61,10 +63,8 @@ class Input:
     def to_dict(self):
         return {
             "input_name": self.input_name,
-            "pieces": [piece.to_dict() for piece in self.pieces],
-            "input_size": self.input_size,
-            "piece_hashes": [piece_hash.to_dict() for piece_hash in self.piece_hashes],
-            "info_hash": self.info_hash
+            "input_size": self.size,
+            "files": [file.to_dict() for file in self.files],
         }
 
 
