@@ -273,15 +273,15 @@ def get_input_dir():
 
 def connect_to_tracker():
     input_data = InputData()
-    get_all_input_pieces_status(input_data, get_input_dir())
-    input_data_json = json.dumps(input_data.to_dict())
+    # get_all_input_pieces_status(input_data, get_input_dir())
+    # input_data_json = json.dumps(input_data.to_dict())
 
     torrent_info = {
         "path": get_input_dir(),
         "peer_id": "Ubuntu " + get_time(),
         "port": 1234,
         "ip": get_peer_ip(),
-        "pieces": input_data_json,
+        # "pieces": input_data_json,
         "event": "started"
     }
     response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
