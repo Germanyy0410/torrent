@@ -318,6 +318,9 @@ if __name__ == "__main__":
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = get_peer_ip()
     port = 1234
+    
+    connect_to_tracker()
+    print("Send response to tracker.")
 
     # Liên kết socket với địa chỉ IP và số cổng
     server_socket.bind((host, port))
@@ -325,8 +328,6 @@ if __name__ == "__main__":
     # Lắng nghe kết nối đến từ máy khách
     server_socket.listen(1)
 
-    connect_to_tracker()
-    print("Send response to tracker.")
 
 
     # Receive torrent name
