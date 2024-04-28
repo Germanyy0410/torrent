@@ -156,7 +156,12 @@ def upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_p
 
         # Send request type
         req = "upload_request"
-        client_socket.send(req.encode())
+        data_to_send_1 = {
+            "torrent_name": str(torrent_name),
+            "request": str(req)
+        }
+        json_data_1 = json.dumps(data_to_send_1)
+        client_socket.send(json_data_1.encode('utf-8'))
 
         # Send piece path
         data_to_send=  {
@@ -173,13 +178,18 @@ def upload_piece(client_socket, torrent_name, file_name, sender_path, receiver_p
                 print("File '{}' has been uploaded successfully...".format(sender_path))
 
 
-def download_piece(client_socket, file_name, sender_path, receiver_path):
+def download_piece(client_socket, torrent_name, file_name, sender_path, receiver_path):
     req = "download_request"
-    client_socket.send(req.encode())
+    data_to_send_1 = {
+        "torrent_name": str(torrent_name),
+        "request": str(req)
+    }
+    json_data_1 = json.dumps(data_to_send_1)
+    client_socket.send(json_data_1.encode('utf-8'))
 
     # Send file path & piece hashes
     data_to_send = {
-        "file_name": file_name,
+        "file_name": str(file_name),
         "file_path": str(sender_path),
     }
     json_data = json.dumps(data_to_send)
@@ -231,7 +241,7 @@ def download_file(peer, input: Input, torrent_name):
                 # thread.start()
                 # threads.append(thread)
 
-                download_piece(client_socket, file, sender_path, receiver_path)
+                download_piece(client_socket, torrent_name, file, sender_path, receiver_path)
                 part.status = True
             else:
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file}_{part.piece_number}.part')
@@ -313,7 +323,13 @@ if __name__ == "__main__":
     # client_socket.sendall(inputs.encode('utf-8'))
 
     while True:
-        client_request = client_socket.recv(1024).decode()
+        recv_input_json = client_socket.recv(1024).decode('utf-8')
+        recv_input = json.loads(recv_input_json)
+        client_request = recv_input["request"]
+
+        torrent_name = recv_input["torrent_name"]
+        input = main.get_torrent_status(torrent_name)
+
         # Download
         if client_request == 'download_request':
             print("This is a download request...")
