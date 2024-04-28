@@ -239,9 +239,6 @@ def download_file(peer, input: Input, torrent_name):
     peer_port = peer["port"]
     sender_folder = peer["path"]
 
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((peer_ip, int(peer_port)))
-
     # Send torrent name to peer
     # client_socket.send(str(torrent_name).encode())
 
