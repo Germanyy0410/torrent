@@ -155,8 +155,6 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
-    print(f"Connect successfully to [{peer_ip}, {peer_port}].")
-    print("\nUploading to peer...\n")
 
     if verify_piece(torrent_name, file_name, sender_path) == False:
         print("Error: Piece has been modified, cannot upload to peer(s).")
@@ -173,6 +171,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
         response = client_socket.recv(1024).decode('utf-8')
         if not response:
+            print(f"Uploading: Connect successfully to [{peer_ip}, {peer_port}].")
             # Send piece data
             if os.path.exists(sender_path):
                 with open(sender_path, 'rb') as file:
@@ -189,7 +188,6 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
-    print(f"Connect successfully to [{peer_ip}, {peer_port}].")
 
     req = "download_request"
     data_to_send_1 = {
@@ -212,6 +210,7 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     print("Received: Piece size = ", piece_size)
 
     if piece_size > 0:
+        print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
         # Receive file data
         with open(receiver_path, 'wb') as file:
             progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
