@@ -10,6 +10,11 @@ import pickle
 def get_input_path(file_name):
     return (os.path.dirname(os.path.realpath(__file__)) + '/input/' + file_name).replace('\\', '/')
 
+
+def get_output_path(file_name):
+    return (os.path.dirname(os.path.realpath(__file__)) + '/output/' + file_name).replace('\\', '/')
+
+
 def get_torrent_path(file_name):
     return get_input_path(file_name) + '/' + file_name + '.torrent'
 
@@ -96,7 +101,7 @@ def get_torrent_status(torrent_name):
         if ".torrent" in file:
             break
 
-        file_path = get_input_path(torrent_name) + "/" + file["name"]
+        file_path = get_output_path(torrent_name) + "/" + file["name"]
         status = False
         if os.path.exists(file_path):
             status = True

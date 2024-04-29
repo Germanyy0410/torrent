@@ -239,15 +239,21 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
 
     # Receive piece size
     piece_size = client_socket.recv(1024).decode()
-
+    current_pieces = get_existed_pieces(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
+    os.system("cls")
     if piece_size != "":
         print("\n===========================================================")
-        print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
-        print(f"\n{piece_name} = {get_piece_size(int(piece_size))}\n")
-        # Receive file data
-        tmp = b""
-        table = PrettyTable(['File', 'Piece', 'Piece Progress', 'File Progress'])
+        print(f"Downloading: Connected to [{peer_ip}, {peer_port}].")
 
+        progress_percent = int(current_pieces / int(total_pieces) * 100)
+        max_progress_length = 60
+        num_equals = min(int(progress_percent * max_progress_length / 100), max_progress_length)
+        progress_bar_str = "|" + "=" * num_equals + "-" * (max_progress_length - num_equals) + "|"
+
+        print(f"\nFile: {file_name} ({current_pieces}/{total_pieces})\t\t{progress_bar_str}")
+        print(f"Piece: {piece_name} ({get_piece_size(int(piece_size))})\n")
+
+        # Receive file data
         with open(receiver_path, 'wb') as file:
             progress_bar = tqdm(total=int(piece_size), unit='B', unit_scale=True)
             while True:
@@ -255,7 +261,6 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
                 if not data:
                     break
                 file.write(data)
-                tmp += data
                 progress_bar.update(len(data))
                 # print_download_progress(table, tmp, piece_size, file_name, piece_name, receiver_path, total_pieces)
             progress_bar.close()
@@ -263,8 +268,8 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
         part.status = True
 
         merge_files(file_name.rsplit(".", 1)[0], receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file_name))
-        print(f"\n{piece_name} downloaded successfully.\n")
-        print("===========================================================\n\n")
+        # print(f"\n{piece_name} downloaded successfully.\n")
+        print("===========================================================")
     else:
         print("File {} does not existed in peer.".format(piece_name))
 
