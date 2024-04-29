@@ -14,6 +14,7 @@ def get_torrent_path(file_name):
     return get_input_path(file_name) + '/' + file_name + '.torrent'
 
 #* ================================ TORRENT ===============================
+
 def read_torrent(torrent_file_path):
     with open(torrent_file_path, 'rb') as torrent_file:
         # Đọc dữ liệu từ file torrent
@@ -86,15 +87,6 @@ def get_total_file_size(torrent_info):
     return total_size
 
 
-# TODO: Calculate hash bytes in each part
-def generate_pieces_hash(pieces_bytes):
-    hashes = []
-    for i in range(0, len(pieces_bytes), 20):
-        piece_data = pieces_bytes[i:i+20]
-        hashes.append(piece_data)
-    return hashes
-
-
 def get_torrent_status(torrent_name):
     torrent_info, piece_hashes = read_torrent(get_torrent_path(torrent_name))
     input = Input(torrent_name)
@@ -114,8 +106,29 @@ def get_torrent_status(torrent_name):
 
     return input
 
-
 #* ========================================================================
+# running = True
+
+# def user_input_thread():
+#     global running
+#     input()
+#     running = False
+#     user_command = input("Nhập câu lệnh: ")
+#     if user_command == "b-create":
+#         # TODO:
+#         print("a")
+#     elif user_command == "b-start":
+#         # TODO:
+#         print("a")
+#     elif user_command == "b-show":
+#         # TODO:
+#         print("a")
+#     elif user_command == "b-info":
+#         # TODO:
+#         print("a")
+
+# input_thread = threading.Thread(target=user_input_thread)
+# input_thread.start()
 
 
 #* ========================== START APPLICATION ===========================

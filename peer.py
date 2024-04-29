@@ -10,6 +10,7 @@ from tqdm import tqdm
 import subprocess
 import main
 import pickle
+from prettytable import PrettyTable
 
 
 load_dotenv()
@@ -184,7 +185,27 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     client_socket.close()
 
 
-def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
+def get_existed_pieces(folder_path, file_name):
+    count = 0
+    for piece in os.listdir(folder_path):
+        if file_name in piece:
+            count += 1
+    return count
+
+
+def print_download_progress(data, piece_size, file_name, piece_name, receiver_path, total_pieces):
+    os.system('cls')
+    tqdm(total=int(piece_size), unit='B', unit_scale=True).update(len(data))
+
+    progress_str = f"{len(data)}/{piece_size}"
+    table = PrettyTable(['File', 'Piece', 'Piece Progress', 'File Progress'])
+    current_pieces = get_existed_pieces(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
+    new_str = str(current_pieces) + " / " + str(total_pieces)
+    table.add_row([file_name, piece_name, progress_str, new_str])
+    print(table.get_string() + '\n')
+
+
+def download_piece(peer, torrent_name, file_name, sender_path, receiver_path, total_pieces):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = receiver_path.split("/")[-1]
@@ -203,14 +224,6 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     request_json = json.dumps(request)
     client_socket.send(request_json.encode('utf-8'))
 
-    # Send file path & piece hashes
-    # data_to_send = {
-    #     "file_name": str(file_name),
-    #     "file_path": str(sender_path),
-    # }
-    # json_data = json.dumps(data_to_send)
-    # client_socket.send(json_data.encode('utf-8'))
-
     # Receive piece size
     piece_size = client_socket.recv(1024).decode()
     print("Piece: ", piece_size)
@@ -219,15 +232,16 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
         print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
         print(f"{receiver_path}: {piece_size} Bytes")
         # Receive file data
+        tmp = b""
         with open(receiver_path, 'wb') as file:
-            progress_bar = tqdm(total=int(piece_size), unit='B', unit_scale=True)
             while True:
                 data = client_socket.recv(1024)
                 if not data:
                     break
                 file.write(data)
-                progress_bar.update(len(data))
-            progress_bar.close()
+                tmp += data
+                # progress_bar.update(len(data))
+                print_download_progress(tmp, piece_size, file_name, piece_name, receiver_path, total_pieces)
 
         print(f"{piece_name} downloaded successfully.\n")
     else:
@@ -245,6 +259,7 @@ def download_file(peer, input: Input, torrent_name):
     for file in input.files:
         file_name = file.file_name.rsplit(".", 1)[0]
         for part in file.pieces:
+            total_pieces = len(file.pieces)
             if not part.status:
                 sender_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
@@ -253,7 +268,8 @@ def download_file(peer, input: Input, torrent_name):
                 # thread.start()
                 # threads.append(thread)
 
-                download_piece(peer, torrent_name, file_name, sender_path, receiver_path)
+                download_piece(peer, torrent_name, file.file_name, sender_path, receiver_path, total_pieces)
+                merge_files(file_name, receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file.file_name))
                 part.status = True
             else:
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
@@ -285,6 +301,10 @@ def get_peer_ip():
 
 def get_input_dir():
     return os.path.dirname(os.path.realpath(__file__)) + '/input/'
+
+
+def get_output_path(torrent_name, file):
+    return os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/output/' + torrent_name + '/' + str(file)
 
 
 def connect_to_tracker():
@@ -396,15 +416,15 @@ if __name__ == "__main__":
 
 #* ============================== MERGE FILES ==============================
 
-def merge_files(input_dir, output_file):
-    parts = [part for part in os.listdir(input_dir) if part.endswith('.part')]  # Chọn chỉ các file parts
-    parts.sort(key=lambda x: int(x.split('_')[0]))  # Sắp xếp các parts theo số thứ tự
+def merge_files(file_name, input_dir, output_file):
+    parts = [part for part in os.listdir(input_dir) if part.endswith('.part') and file_name in part]  # Chọn chỉ các file parts
+    parts.sort(key=lambda x: int(x.split('_')[1].split(".")[0]))  # Sắp xếp các parts theo số thứ tự
 
     merged = False
     previous_number = None
     with open(output_file, 'wb') as f:
         for part in parts:
-            number = int(part.split('_')[0])
+            number = int(part.split('_')[1].split(".")[0])
             if previous_number is None or number == previous_number + 1:
                 part_path = os.path.join(input_dir, part)
                 with open(part_path, 'rb') as p:
@@ -423,30 +443,3 @@ def merge_files(input_dir, output_file):
         print("Cannot merge the parts due to discontinuous numbering.")
 
 #* =========================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # pieces = get_pieces_status(input_folder_path)
-    # download_file(peer_ip, peer_port, server_folder, pieces, user_file)
-
-    # peer_ip = '192.168.227.130'
-    # peer_port = 1234
-
-    # user_file = input("Please input file name you want to download: ")
-    # input_folder_path = (os.path.dirname(os.path.realpath(__file__)) + '/input/' + user_file).replace('\\', '/')
-    # server_folder = os.environ['PEER_PATH'] + user_file
-
