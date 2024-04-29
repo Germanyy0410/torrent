@@ -142,9 +142,14 @@ if __name__ == '__main__':
     torrent_name = 'books'
     input = get_torrent_status(torrent_name)
     inputs = json.dumps(input.to_dict())
-    # Connect client to peer(s)
-    for p in peers.values():
-        # input.input_size = get_total_file_size(torrent_info)
 
-        download_file(p, input, torrent_name)
+    threads = []
+    # Connect client to peer(s)
+    for peer in peers.values():
+        thread = threading.Thread(target=download_file, args=(peer, input, torrent_name))
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
 #* ========================================================================

@@ -149,6 +149,19 @@ def verify_piece(torrent_name, file_name, file_path):
 
     return False
 
+def get_piece_size(piece_size):
+    if piece_size >= 1024:
+        kb_value = piece_size / 1024
+        if kb_value >= 1024:
+            mb_value = kb_value / 1024
+            return str(round(mb_value, 2)) + "MB"
+        else:
+            return str(round(kb_value, 2)) + "KB"
+    else:
+        return str(round(piece_size, 2)) + "Bytes"
+
+    return piece_size
+
 
 def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
@@ -183,6 +196,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
                     print("File '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
 
     client_socket.close()
+    lock.release()
 
 
 def get_existed_pieces(folder_path, file_name):
@@ -193,19 +207,18 @@ def get_existed_pieces(folder_path, file_name):
     return count
 
 
-def print_download_progress(data, piece_size, file_name, piece_name, receiver_path, total_pieces):
+def print_download_progress(table, data, piece_size, file_name, piece_name, receiver_path, total_pieces):
     os.system('cls')
-    tqdm(total=int(piece_size), unit='B', unit_scale=True).update(len(data))
 
     progress_str = f"{len(data)}/{piece_size}"
-    table = PrettyTable(['File', 'Piece', 'Piece Progress', 'File Progress'])
     current_pieces = get_existed_pieces(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
     new_str = str(current_pieces) + " / " + str(total_pieces)
+    table.clear_rows()
     table.add_row([file_name, piece_name, progress_str, new_str])
     print(table.get_string() + '\n')
 
 
-def download_piece(peer, torrent_name, file_name, sender_path, receiver_path, total_pieces):
+def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_path, total_pieces):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = receiver_path.split("/")[-1]
@@ -226,31 +239,40 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path, to
 
     # Receive piece size
     piece_size = client_socket.recv(1024).decode()
-    print("Piece: ", piece_size)
 
     if piece_size != "":
+        print("\n===========================================================")
         print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
-        print(f"{receiver_path}: {piece_size} Bytes")
+        print(f"\n{piece_name} = {get_piece_size(int(piece_size))}\n")
         # Receive file data
         tmp = b""
+        table = PrettyTable(['File', 'Piece', 'Piece Progress', 'File Progress'])
+
         with open(receiver_path, 'wb') as file:
+            progress_bar = tqdm(total=int(piece_size), unit='B', unit_scale=True)
             while True:
                 data = client_socket.recv(1024)
                 if not data:
                     break
                 file.write(data)
                 tmp += data
-                # progress_bar.update(len(data))
-                print_download_progress(tmp, piece_size, file_name, piece_name, receiver_path, total_pieces)
+                progress_bar.update(len(data))
+                # print_download_progress(table, tmp, piece_size, file_name, piece_name, receiver_path, total_pieces)
+            progress_bar.close()
 
-        print(f"{piece_name} downloaded successfully.\n")
+        part.status = True
+
+        merge_files(file_name.rsplit(".", 1)[0], receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file_name))
+        print(f"\n{piece_name} downloaded successfully.\n")
+        print("===========================================================\n\n")
     else:
         print("File {} does not existed in peer.".format(piece_name))
 
-    # TODO: Later
-    # merge_files()
     client_socket.close()
+    lock.release()
 
+
+lock = threading.Lock()
 
 def download_file(peer, input: Input, torrent_name):
     threads = []
@@ -264,25 +286,28 @@ def download_file(peer, input: Input, torrent_name):
                 sender_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
-                # thread = threading.Thread(target=download_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes[part.piece_number - 1]))
-                # thread.start()
-                # threads.append(thread)
+                lock.acquire()
 
-                download_piece(peer, torrent_name, file.file_name, sender_path, receiver_path, total_pieces)
-                merge_files(file_name, receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file.file_name))
-                part.status = True
+                thread = threading.Thread(target=download_piece, args=(peer, part, torrent_name, file.file_name, sender_path, receiver_path, total_pieces))
+                thread.start()
+                threads.append(thread)
+
+                # download_piece(peer, torrent_name, file.file_name, sender_path, receiver_path, total_pieces)
+                # merge_files(file_name, receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file.file_name))
             else:
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
-                # thread = threading.Thread(target=upload_piece, args=(peer_ip, peer_port, sender_path, receiver_path, piece_hashes))
-                # thread.start()
-                # threads.append(thread)
+                lock.acquire()
 
-                upload_piece(peer, torrent_name, file_name, sender_path, receiver_path)
+                thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file_name, sender_path, receiver_path))
+                thread.start()
+                threads.append(thread)
 
-    # for thread in threads:
-    #     thread.join()
+                # upload_piece(peer, torrent_name, file_name, sender_path, receiver_path)
+
+    for thread in threads:
+        thread.join()
 
 #* =========================================================================
 
@@ -436,10 +461,10 @@ def merge_files(file_name, input_dir, output_file):
                 merged = False
                 break
 
-    if merged:
-        print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
-    else:
-        os.remove(output_file)
-        print("Cannot merge the parts due to discontinuous numbering.")
+    # if merged:
+    #     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
+    # else:
+    #     os.remove(output_file)
+    #     print("Cannot merge the parts due to discontinuous numbering.")
 
 #* =========================================================================
