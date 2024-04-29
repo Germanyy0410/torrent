@@ -207,10 +207,10 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     # Receive piece size
     piece_size = int(client_socket.recv(1024).decode())
-    print("Received: Piece size = ", piece_size)
 
     if piece_size > 0:
         print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
+        print(f"{receiver_path}: {piece_size} Bytes")
         # Receive file data
         with open(receiver_path, 'wb') as file:
             progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
@@ -233,16 +233,7 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
 def download_file(peer, input: Input, torrent_name):
     threads = []
-    peer_ip = peer["ip"]
-    peer_port = peer["port"]
     sender_folder = peer["path"]
-
-    # Send torrent name to peer
-    # client_socket.send(str(torrent_name).encode())
-
-    # Receive torrent status from peer
-    # peer_json = client_socket.recv(1000000000).decode('utf-8')
-    # peer_info = json.loads(peer_json)
 
     for file in input.files:
         file_name = file.file_name.rsplit(".", 1)[0]

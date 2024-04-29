@@ -126,7 +126,7 @@ if __name__ == '__main__':
         peers = json.load(file)
 
     # torrent_name = input("Please input file name you want to download: ")
-    torrent_name = 'slides'
+    torrent_name = 'books'
     input = get_torrent_status(torrent_name)
     inputs = json.dumps(input.to_dict())
     # Connect client to peer(s)
