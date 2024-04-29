@@ -3,7 +3,9 @@ venv/
 __pycache__/
 func/Inside Part 1.mp4
 func/assets/
-input/
+input/books/parts/
+input/videos/parts/
+input/slides/parts/
 output/books/
 output/videos/
 output/slides/
