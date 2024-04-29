@@ -155,35 +155,30 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
-
+    print(f"Connect successfully to [{peer_ip}, {peer_port}].")
     print("\nUploading to peer...\n")
 
     if verify_piece(torrent_name, file_name, sender_path) == False:
         print("Error: Piece has been modified, cannot upload to peer(s).")
     else:
-
         # Send request type
         req = "upload_request"
-        data_to_send_1 = {
+        request = {
             "torrent_name": str(torrent_name),
             "request": str(req)
         }
-        json_data_1 = json.dumps(data_to_send_1)
-        client_socket.send(json_data_1.encode('utf-8'))
+        request_json = json.dumps(request)
+        client_socket.send(request_json.encode('utf-8'))
 
-        # Send piece path
-        data_to_send=  {
-            "file_path": str(receiver_path)
-        }
-        json_data = json.dumps(data_to_send)
-        client_socket.send(json_data.encode('utf-8'))
+        # Send receiver path
+        client_socket.send(str(receiver_path).encode('utf-8'))
 
         # Send piece data
         if os.path.exists(sender_path):
             with open(sender_path, 'rb') as file:
                 data = file.read()
                 client_socket.sendall(data)
-                print("File '{}' has been uploaded successfully...".format(sender_path))
+                print("File '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
 
     client_socket.close()
 
@@ -194,6 +189,7 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
+    print(f"Connect successfully to [{peer_ip}, {peer_port}].")
 
     req = "download_request"
     data_to_send_1 = {
@@ -213,24 +209,27 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 
     # Receive piece size
     piece_size = int(client_socket.recv(1024).decode())
+    print("Received: Piece size = ", piece_size)
 
-    # Receive file data
-    with open(receiver_path, 'wb') as file:
-        progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
-        while True:
-            data = client_socket.recv(1024)
-            if not data:
-                break
-            file.write(data)
-            progress_bar.update(len(data))
-        progress_bar.close()
+    if piece_size > 0:
+        # Receive file data
+        with open(receiver_path, 'wb') as file:
+            progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                file.write(data)
+                progress_bar.update(len(data))
+            progress_bar.close()
 
-    print(f"{receiver_path} downloaded successfully.\n")
+        print(f"{receiver_path} downloaded successfully.\n")
+    else:
+        print("File {} does not existed in peer.".format(sender_path.split("/")[-1]))
 
     # TODO: Later
     # merge_files()
     client_socket.close()
-
 
 
 def download_file(peer, input: Input, torrent_name):
@@ -293,16 +292,11 @@ def get_input_dir():
 
 
 def connect_to_tracker():
-    input_data = InputData()
-    # get_all_input_pieces_status(input_data, get_input_dir())
-    # input_data_json = json.dumps(input_data.to_dict())
-
     torrent_info = {
         "path": get_input_dir().replace("\\", "/"),
         "peer_id": "Ubuntu " + get_time(),
         "port": 1234,
         "ip": get_peer_ip(),
-        # "pieces": input_data_json,
         "event": "started"
     }
     response = requests.get("http://" + os.environ['CURRENT_IP'] + ":8080/announce", params=torrent_info)
@@ -318,7 +312,7 @@ if __name__ == "__main__":
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = get_peer_ip()
     port = 1234
-    
+
     connect_to_tracker()
     print("Send response to tracker.")
 
@@ -328,43 +322,34 @@ if __name__ == "__main__":
     # Lắng nghe kết nối đến từ máy khách
     server_socket.listen(1)
 
-
-
-    # Receive torrent name
-    # torrent_name = client_socket.recv(1024).decode()
-
-    # Send torrent status to client
-    # input = main.get_torrent_status(torrent_name)
-    # inputs = json.dumps(input.to_dict())
-    # client_socket.sendall(inputs.encode('utf-8'))
-
     while True:
         print("Start listening...")
         client_socket, client_address = server_socket.accept()
         recv_input_json = client_socket.recv(1024).decode('utf-8')
-        print(recv_input_json)
         recv_input = json.loads(recv_input_json)
-        print(recv_input)
-        client_request = recv_input["request"]
+        print("Recieved: torrent name & request.", recv_input)
 
         torrent_name = recv_input["torrent_name"]
         input = main.get_torrent_status(torrent_name)
 
+        client_request = recv_input["request"]
         # Download
         if client_request == 'download_request':
             print("This is a download request...")
+
             # Receive file path & piece hashes
             received_data = client_socket.recv(1024).decode('utf-8')
             parsed_data = json.loads(received_data)
             file_path = parsed_data["file_path"].replace('//', '/')
             file_name = parsed_data["file_name"]
-            print("Received file path:", file_path)
+            print("Received: file.", parsed_data)
 
-            # Send piece size to client
-            client_socket.send(str(os.path.getsize(file_path)).encode())
 
             # Kiểm tra sự tồn tại của file và piece hash
             if os.path.exists(file_path):
+                # Send piece size to client
+                client_socket.send(str(os.path.getsize(file_path)).encode())
+
                 if verify_piece(torrent_name, file_name, file_path) == True:
                     print("Verified: Piece matched.")
 
@@ -372,24 +357,21 @@ if __name__ == "__main__":
                         data = file.read()
                         try:
                             client_socket.sendall(data)
-                            print("File '{}' has sent successfully.".format(file_path))
+                            print("File '{}' has sent successfully.".format(file_path.split("/")[-1]))
                         except BrokenPipeError:
                             pass
                 else:
                     print("Error: Piece has been modified.")
 
             else:
-                client_socket.sendall("")
-                print("File '{}' không tồn tại.".format(file_path))
+                piece_size = "0"
+                client_socket.send(piece_size.encode('utf-8'))
+                print("File '{}' does not existed.".format(file_path.split("/")[-1]))
 
         # Upload
         elif client_request == 'upload_request':
             print("This is a upload request...")
-            received_data = client_socket.recv(1024).decode('utf-8')
-            parsed_data = json.loads(received_data)
-
-            # TODO: Receive piece_size
-            file_path = parsed_data["file_path"]
+            file_path = client_socket.recv(1024).decode('utf-8')
 
             with open(file_path, 'wb') as file:
                 progress_bar = tqdm(total=512 * 1024, unit='B', unit_scale=True)
