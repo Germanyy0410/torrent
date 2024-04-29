@@ -152,12 +152,12 @@ def verify_piece(torrent_name, file_name, file_path):
 def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
-
+    piece_name = sender_path.split("/")[-1]
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
 
     if verify_piece(torrent_name, file_name, sender_path) == False:
-        print("Error: Piece has been modified, cannot upload to peer(s).")
+        print(f"Error: Piece {piece_name} has been modified, cannot upload to peer(s).")
     else:
         # Send request type
         req = "upload_request"
@@ -185,6 +185,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
 def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
+    piece_name = receiver_path.split("/")[-1]
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
@@ -192,7 +193,8 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     req = "download_request"
     data_to_send_1 = {
         "torrent_name": str(torrent_name),
-        "request": str(req)
+        "request": str(req),
+        "receiver_path": str(receiver_path)
     }
     json_data_1 = json.dumps(data_to_send_1)
     client_socket.send(json_data_1.encode('utf-8'))
@@ -206,14 +208,15 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     client_socket.send(json_data.encode('utf-8'))
 
     # Receive piece size
-    piece_size = int(client_socket.recv(1024).decode())
+    piece_size = client_socket.recv(1024).decode()
+    print("Piece: ", piece_size)
 
-    if piece_size > 0:
+    if int(piece_size) > 0:
         print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
         print(f"{receiver_path}: {piece_size} Bytes")
         # Receive file data
         with open(receiver_path, 'wb') as file:
-            progress_bar = tqdm(total=piece_size, unit='B', unit_scale=True)
+            progress_bar = tqdm(total=int(piece_size), unit='B', unit_scale=True)
             while True:
                 data = client_socket.recv(1024)
                 if not data:
@@ -222,9 +225,9 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
                 progress_bar.update(len(data))
             progress_bar.close()
 
-        print(f"{receiver_path} downloaded successfully.\n")
+        print(f"{piece_name} downloaded successfully.\n")
     else:
-        print("File {} does not existed in peer.".format(sender_path.split("/")[-1]))
+        print("File {} does not existed in peer.".format(piece_name))
 
     # TODO: Later
     # merge_files()
@@ -260,7 +263,6 @@ def download_file(peer, input: Input, torrent_name):
 
     # for thread in threads:
     #     thread.join()
-    client_socket.close()
 
 #* =========================================================================
 
@@ -316,6 +318,7 @@ if __name__ == "__main__":
         print("Start listening...")
         client_socket, client_address = server_socket.accept()
         recv_input_json = client_socket.recv(1024).decode('utf-8')
+        print(recv_input_json)
         recv_input = json.loads(recv_input_json)
         print("Recieved: torrent name & request.", recv_input)
 
