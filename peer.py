@@ -156,19 +156,21 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
 
+    # Send request type
+    req = "upload_request"
+    request = {
+        "torrent_name": str(torrent_name),
+        "request": str(req),
+        "receiver_path": str(receiver_path),
+        "file_name": str(file_name),
+        "file_path": str(sender_path),
+    }
+    request_json = json.dumps(request)
+    client_socket.send(request_json.encode('utf-8'))
+
     if verify_piece(torrent_name, file_name, sender_path) == False:
         print(f"Error: Piece {piece_name} has been modified, cannot upload to peer(s).")
     else:
-        # Send request type
-        req = "upload_request"
-        request = {
-            "torrent_name": str(torrent_name),
-            "request": str(req),
-            "receiver_path": str(receiver_path)
-        }
-        request_json = json.dumps(request)
-        client_socket.send(request_json.encode('utf-8'))
-
         response = client_socket.recv(1024).decode('utf-8')
         if not response:
             print(f"Uploading: Connect successfully to [{peer_ip}, {peer_port}].")
@@ -191,27 +193,29 @@ def download_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     client_socket.connect((peer_ip, int(peer_port)))
 
     req = "download_request"
-    data_to_send_1 = {
+    request = {
         "torrent_name": str(torrent_name),
         "request": str(req),
-        "receiver_path": str(receiver_path)
-    }
-    json_data_1 = json.dumps(data_to_send_1)
-    client_socket.send(json_data_1.encode('utf-8'))
-
-    # Send file path & piece hashes
-    data_to_send = {
+        "receiver_path": str(receiver_path),
         "file_name": str(file_name),
         "file_path": str(sender_path),
     }
-    json_data = json.dumps(data_to_send)
-    client_socket.send(json_data.encode('utf-8'))
+    request_json = json.dumps(request)
+    client_socket.send(request_json.encode('utf-8'))
+
+    # Send file path & piece hashes
+    # data_to_send = {
+    #     "file_name": str(file_name),
+    #     "file_path": str(sender_path),
+    # }
+    # json_data = json.dumps(data_to_send)
+    # client_socket.send(json_data.encode('utf-8'))
 
     # Receive piece size
     piece_size = client_socket.recv(1024).decode()
     print("Piece: ", piece_size)
 
-    if int(piece_size) > 0:
+    if piece_size != "":
         print(f"Downloading: Connect successfully to [{peer_ip}, {peer_port}].")
         print(f"{receiver_path}: {piece_size} Bytes")
         # Receive file data
@@ -331,11 +335,9 @@ if __name__ == "__main__":
             print("This is a download request...")
 
             # Receive file path & piece hashes
-            received_data = client_socket.recv(1024).decode('utf-8')
-            parsed_data = json.loads(received_data)
-            file_path = parsed_data["file_path"].replace('//', '/')
-            file_name = parsed_data["file_name"]
-            print("Received: file.", parsed_data)
+            file_path = recv_input["file_path"].replace('//', '/')
+            file_name = recv_input["file_name"]
+            print("Received: file.", recv_input)
 
 
             # Kiểm tra sự tồn tại của file và piece hash
