@@ -172,7 +172,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
         print(f"Error: Piece {piece_name} has been modified, cannot upload to peer(s).")
     else:
         response = client_socket.recv(1024).decode('utf-8')
-        if not response:
+        if response == "False":
             print(f"Uploading: Connect successfully to [{peer_ip}, {peer_port}].")
             # Send piece data
             if os.path.exists(sender_path):
@@ -375,7 +375,7 @@ if __name__ == "__main__":
             message = "True" if isPieceExisted else "False"
             client_socket.send(message.encode('utf-8'))
 
-            if not message:
+            if message == "False":
                 with open(file_path, 'wb') as file:
                     progress_bar = tqdm(total=512 * 1024, unit='B', unit_scale=True)
                     while True:
