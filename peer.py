@@ -165,20 +165,20 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
         req = "upload_request"
         request = {
             "torrent_name": str(torrent_name),
-            "request": str(req)
+            "request": str(req),
+            "receiver_path": str(receiver_path)
         }
         request_json = json.dumps(request)
         client_socket.send(request_json.encode('utf-8'))
 
-        # Send receiver path
-        client_socket.send(str(receiver_path).encode('utf-8'))
-
-        # Send piece data
-        if os.path.exists(sender_path):
-            with open(sender_path, 'rb') as file:
-                data = file.read()
-                client_socket.sendall(data)
-                print("File '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
+        response = client_socket.recv(1024).decode('utf-8')
+        if not response:
+            # Send piece data
+            if os.path.exists(sender_path):
+                with open(sender_path, 'rb') as file:
+                    data = file.read()
+                    client_socket.sendall(data)
+                    print("File '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
 
     client_socket.close()
 
@@ -371,19 +371,27 @@ if __name__ == "__main__":
         # Upload
         elif client_request == 'upload_request':
             print("This is a upload request...")
-            file_path = client_socket.recv(1024).decode('utf-8')
+            file_path = recv_input["receiver_path"]
 
-            with open(file_path, 'wb') as file:
-                progress_bar = tqdm(total=512 * 1024, unit='B', unit_scale=True)
-                while True:
-                    data = client_socket.recv(1024)
-                    if not data:
-                        break
-                    file.write(data)
-                    progress_bar.update(len(data))
-                progress_bar.close()
+            isPieceExisted = False
+            if os.path.exists(file_path):
+                isPieceExisted = True
 
-            print(f"{file_path} is uploaded successfully...\n")
+            message = "True" if isPieceExisted else "False"
+            client_socket.send(message.encode('utf-8'))
+
+            if not message:
+                with open(file_path, 'wb') as file:
+                    progress_bar = tqdm(total=512 * 1024, unit='B', unit_scale=True)
+                    while True:
+                        data = client_socket.recv(1024)
+                        if not data:
+                            break
+                        file.write(data)
+                        progress_bar.update(len(data))
+                    progress_bar.close()
+
+                print(f"{file_path} is uploaded successfully...\n")
 
         # Đóng kết nối với máy khách
         client_socket.close()
