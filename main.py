@@ -6,6 +6,7 @@ import hashlib
 import peer
 import pickle
 from tracker import *
+import requests
 
 
 def get_input_path(file_name):
@@ -112,6 +113,9 @@ def get_torrent_status(torrent_name):
 
     return input
 
+def get_peers_from_tracker():
+    response = requests.get("http://" + os.environ['TRACKER_IP'] + ":8080/get_peers")
+    return response.json()
 #* ========================================================================
 # running = True
 
@@ -140,6 +144,9 @@ def get_torrent_status(torrent_name):
 #* ========================== START APPLICATION ===========================
 if __name__ == '__main__':
     os.system('cls')
+
+    print(get_peers_from_tracker())
+
     # Load peer(s) information
     with open("peers.json", "r") as file:
         peers = json.load(file)

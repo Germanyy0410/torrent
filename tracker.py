@@ -22,7 +22,8 @@ def update_peers():
 	print("Updated peers.json")
 
 app = Flask(__name__)
-get_ip()
+if __name__ == '__main__':
+	get_ip()
 
 @app.route('/announce', methods=['GET'])
 def announce():
