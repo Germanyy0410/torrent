@@ -15,12 +15,6 @@ def get_ip():
     with open('.env', 'w') as env_file:
         env_file.write(f"CURRENT_IP={os.getenv('CURRENT_IP')}")
 
-
-def update_peers():
-	with open("peers.json", "w") as file:
-		json.dump(peers, file)
-	print("Updated peers.json")
-
 app = Flask(__name__)
 if __name__ == '__main__':
 	get_ip()
@@ -46,10 +40,6 @@ def announce():
 		'peers': list(peers.values())
 	}
 
-	print(peers.values())
-
-	update_peers()
-
 	return jsonify(response)
 
 
@@ -61,7 +51,3 @@ def get_peers():
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=8080, debug=False)
-
-	while True:
-		update_peers()
-		time.sleep(5)

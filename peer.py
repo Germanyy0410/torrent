@@ -11,7 +11,7 @@ import subprocess
 import main
 import pickle
 from prettytable import PrettyTable
-
+import time
 
 load_dotenv()
 os.environ['PEER_PATH'] = '/home/germanyy0410/cn/torrent/input/'
@@ -36,6 +36,7 @@ class Piece:
             "status": self.status,
             "hash": self.hash
         }
+
 
 class File:
     def __init__(self, file_name, file_size, num_pieces, status):
@@ -102,29 +103,6 @@ def get_pieces_status(file ,folder_path):
         file.pieces.append(Piece(i, file_size, os.path.exists(file_path), hash))
 
 
-def get_all_input_pieces_status(InputData, folder_path):
-    if os.path.exists(folder_path) and os.path.isdir(folder_path):
-        subfolders = [f.name for f in os.scandir(folder_path) if f.is_dir()]
-
-        for folder in subfolders:
-            input = Input(folder)
-            torrent_info, piece_hashes = main.read_torrent(main.get_torrent_path(folder))
-            input.piece_hashes = piece_hashes
-
-            for file in torrent_info["files"]:
-                if ".torrent" in file["name"]:
-                    break
-
-                file_path = main.get_input_path(folder) + "/" + file["name"]
-                status = False
-                if os.path.exists(file_path):
-                    status = True
-                file_info = File(file["name"], file["length"], file["num_pieces"], status)
-                get_pieces_status(file_info, main.get_input_path(folder) + "/parts/")
-                input.files.append(file_info)
-
-            InputData.inputs.append(input)
-
 #* =========================================================================
 
 
@@ -149,16 +127,17 @@ def verify_piece(torrent_name, file_name, file_path):
 
     return False
 
+
 def get_piece_size(piece_size):
     if piece_size >= 1024:
         kb_value = piece_size / 1024
         if kb_value >= 1024:
             mb_value = kb_value / 1024
-            return str(round(mb_value, 2)) + "MB"
+            return str(round(mb_value, 2)) + " MB"
         else:
-            return str(round(kb_value, 2)) + "KB"
+            return str(round(kb_value, 2)) + " KB"
     else:
-        return str(round(piece_size, 2)) + "Bytes"
+        return str(round(piece_size, 2)) + " Bytes"
 
     return piece_size
 
@@ -207,21 +186,16 @@ def get_existing_piece_num(folder_path, file_name):
     return count
 
 
-def print_download_progress(table, data, piece_size, file_name, piece_name, receiver_path, total_pieces):
-    os.system('cls')
-
-    progress_str = f"{len(data)}/{piece_size}"
-    current_pieces = get_existing_piece_num(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
-    new_str = str(current_pieces) + " / " + str(total_pieces)
-    table.clear_rows()
-    table.add_row([file_name, piece_name, progress_str, new_str])
-    print(table.get_string() + '\n')
-
-
 def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_path, total_pieces):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = receiver_path.split("/")[-1]
+    elapsed_time = time.time() - start_time
+    hours, remainder = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    elapsed_time_str = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
+    print("elapsed time: ", elapsed_time_str)
+
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
@@ -242,6 +216,7 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
     current_pieces = get_existing_piece_num(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
     os.system("cls")
     if piece_size != "":
+        print("\nelapsed time: ", elapsed_time_str)
         print("\n===========================================================")
         print(f"Downloading: Connected to [{peer_ip}, {peer_port}].")
 
@@ -278,12 +253,15 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
 
 
 lock = threading.Lock()
+start_time = time.time()
 
-def download_file(peer, input: Input, torrent_name, threads):
+def download_torrent(peer, input: Input, torrent_name, threads):
     # threads = []
     sender_folder = peer["path"]
 
     for file in input.files:
+
+
         file_name = file.file_name.rsplit(".", 1)[0]
         for part in file.pieces:
             total_pieces = len(file.pieces)
@@ -471,5 +449,4 @@ def merge_files(file_name, input_dir, output_file):
 if __name__ == "__main__":
     connect_to_tracker()
     print("Send response to tracker.")
-
     listen_from_client()

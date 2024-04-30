@@ -36,8 +36,8 @@ def merge_files(input_dir, output_file, arr):
 
     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
 
-input_file = 'D:/CN_Ass/output/slides/Chapter_8_v8.0.pdf'  # Path to the input file
-output_directory = 'input/slides/parts'  # Output directory where parts will be saved
+input_file = 'D:/CN_Ass/output/books/A.pdf'  # Path to the input file
+output_directory = 'input/books/parts'  # Output directory where parts will be saved
 # input_file = f'D:/CN_Ass/input/videos/video.mkv'
 # output_directory = 'input/videos/parts'  # Output directory where parts will be saved
 arr = split_file(input_file, output_directory, part_size=512 * 1024)

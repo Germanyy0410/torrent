@@ -83,13 +83,16 @@ def create_torrent(directory_path, tracker_url, piece_length=512 * 1024):
                 piece_size = len(piece_data)
                 pieces.append({'hash': piece_hash, 'length': piece_size})
 
+            file_hash = hashlib.sha1(file_data).digest()
+
             # Thêm thông tin của file vào danh sách
             file_info = {
                 'path': file_path.replace("\\", "/"),
                 'name': file_path.replace("\\", "/").split('/')[-1],
                 'length': file_size,
                 'pieces': pieces,
-                'num_pieces': num_pieces
+                'num_pieces': num_pieces,
+                'file_hash': file_hash
             }
             files.append(file_info)
 
@@ -103,6 +106,8 @@ def create_torrent(directory_path, tracker_url, piece_length=512 * 1024):
         'announce': tracker_url
     }
 
+    info_hash = hashlib.sha1(bencode(torrent_info['info'])).digest()
+    torrent_info['info']['info_hash'] = info_hash
     # Mã hóa thông tin của torrent bằng Bencoding
     torrent_data = bencode(torrent_info)
 
@@ -111,14 +116,14 @@ def create_torrent(directory_path, tracker_url, piece_length=512 * 1024):
     with open(torrent_file_path, 'wb') as torrent_file:
         torrent_file.write(torrent_data)
 
-directory_path = 'D:/CN_Ass/input/slides'
+directory_path = 'D:/CN_Ass/output/books'
 tracker_url = 'http:/10.46.153.20:8080/announce'
-directory_path = 'D:/CN_Ass/input/videos'
-tracker_url = 'http:/192.168.1.6:8080/announce'
+# directory_path = 'D:/CN_Ass/input/videos'
+# tracker_url = 'http:/192.168.1.6:8080/announce'
 
 create_torrent(directory_path, tracker_url)
 
-# Đọc thông tin từ file torrent và in ra thông tin của mỗi file
-torrent_info, file_piece_hashes = read_torrent(directory_path + '/videos.torrent')
+# # Đọc thông tin từ file torrent và in ra thông tin của mỗi file
+# torrent_info, file_piece_hashes = read_torrent(directory_path + '/videos.torrent')
 
-print("All piece hashes:", type(file_piece_hashes))
+# print("All piece hashes:", type(file_piece_hashes))
