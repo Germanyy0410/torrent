@@ -181,7 +181,7 @@ running = True
 
 def torrent_start(torrent_name):
     peers = get_peers_from_tracker()
-
+    print(peers)
     # torrent_name = input("Please input file name you want to download: ")
     input = get_torrent_status(torrent_name)
     inputs = json.dumps(input.to_dict())
