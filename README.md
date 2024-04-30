@@ -16,13 +16,6 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 
 </div>
 
-# Up-coming Tasks
-
-- Download từ nhiều peers
-- Xoá các file ```.part```, tự generate mỗi khi run code
-- Upload file (seeder)
-- Report
-
 # Torrent Application
 
 An application created in Computer Network Course - CO3093
@@ -32,7 +25,6 @@ An application created in Computer Network Course - CO3093
 - ```main.py```: Main file to request download Torrent
 - ```tracker.py```: Start local tracker using Flask
 - ```peer.py```: Connect to tracker (run on Ubuntu)
-- ```peer.json```: Store list of peers connected to tracker
 
 ## II. Installation
 
