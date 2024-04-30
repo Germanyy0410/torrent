@@ -199,7 +199,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     lock.release()
 
 
-def get_existed_pieces(folder_path, file_name):
+def get_existing_piece_num(folder_path, file_name):
     count = 0
     for piece in os.listdir(folder_path):
         if file_name in piece:
@@ -211,7 +211,7 @@ def print_download_progress(table, data, piece_size, file_name, piece_name, rece
     os.system('cls')
 
     progress_str = f"{len(data)}/{piece_size}"
-    current_pieces = get_existed_pieces(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
+    current_pieces = get_existing_piece_num(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
     new_str = str(current_pieces) + " / " + str(total_pieces)
     table.clear_rows()
     table.add_row([file_name, piece_name, progress_str, new_str])
@@ -239,7 +239,7 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
 
     # Receive piece size
     piece_size = client_socket.recv(1024).decode()
-    current_pieces = get_existed_pieces(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
+    current_pieces = get_existing_piece_num(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
     os.system("cls")
     if piece_size != "":
         print("\n===========================================================")
@@ -279,8 +279,8 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
 
 lock = threading.Lock()
 
-def download_file(peer, input: Input, torrent_name):
-    threads = []
+def download_file(peer, input: Input, torrent_name, threads):
+    # threads = []
     sender_folder = peer["path"]
 
     for file in input.files:
@@ -311,8 +311,8 @@ def download_file(peer, input: Input, torrent_name):
 
                 # upload_piece(peer, torrent_name, file_name, sender_path, receiver_path)
 
-    for thread in threads:
-        thread.join()
+    # for thread in threads:
+    #     thread.join()
 
 #* =========================================================================
 
@@ -353,7 +353,7 @@ def connect_to_tracker():
 
 #* ========================== LISTEN FROM CLIENT ===========================
 
-if __name__ == "__main__":
+def listen_from_client():
     # Tạo socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = get_peer_ip()
@@ -447,8 +447,8 @@ if __name__ == "__main__":
 #* ============================== MERGE FILES ==============================
 
 def merge_files(file_name, input_dir, output_file):
-    parts = [part for part in os.listdir(input_dir) if part.endswith('.part') and file_name in part]  # Chọn chỉ các file parts
-    parts.sort(key=lambda x: int(x.split('_')[1].split(".")[0]))  # Sắp xếp các parts theo số thứ tự
+    parts = [part for part in os.listdir(input_dir) if part.endswith('.part') and file_name in part]
+    parts.sort(key=lambda x: int(x.split('_')[1].split(".")[0]))
 
     merged = False
     previous_number = None
@@ -466,10 +466,10 @@ def merge_files(file_name, input_dir, output_file):
                 merged = False
                 break
 
-    # if merged:
-    #     print(f"The parts in directory '{input_dir}' have been merged into the file '{output_file}'.")
-    # else:
-    #     os.remove(output_file)
-    #     print("Cannot merge the parts due to discontinuous numbering.")
-
 #* =========================================================================
+
+if __name__ == "__main__":
+    connect_to_tracker()
+    print("Send response to tracker.")
+
+    listen_from_client()

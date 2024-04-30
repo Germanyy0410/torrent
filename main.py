@@ -5,6 +5,7 @@ from bcoding import bdecode, bencode
 import hashlib
 import peer
 import pickle
+from tracker import *
 
 
 def get_input_path(file_name):
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     threads = []
     # Connect client to peer(s)
     for peer in peers.values():
-        thread = threading.Thread(target=download_file, args=(peer, input, torrent_name))
+        thread = threading.Thread(target=download_file, args=(peer, input, torrent_name, threads))
         thread.start()
         threads.append(thread)
 
