@@ -15,14 +15,9 @@ def get_ip():
     with open('.env', 'w') as env_file:
         env_file.write(f"CURRENT_IP={os.getenv('CURRENT_IP')}")
 
-
-def update_peers():
-	with open("peers.json", "w") as file:
-		json.dump(peers, file)
-
-
 app = Flask(__name__)
-get_ip()
+if __name__ == '__main__':
+	get_ip()
 
 @app.route('/announce', methods=['GET'])
 def announce():
@@ -31,36 +26,28 @@ def announce():
 	peer_id = request.args.get('peer_id')
 	port = request.args.get('port')
 	ip = request.args.get('ip')
-	pieces = json.loads(request.args.get('pieces'))
 
 	# Generate peer dictionary key
-	peer_key = hashlib.sha1((peer_id).encode()).hexdigest()
-
-	# Update peer information or add new peer
-	if peer_key in peers:
-		peers[peer_key]['pieces'] = pieces
-	else:
-		peers[peer_key] = {
-			'path': path,
-			'peer_id': peer_id,
-			'port': port,
-			'ip': ip,
-			'pieces': pieces
-		}
-
-	update_peers()
+	peer_key = hashlib.sha1((peer_id + ip).encode()).hexdigest()
+	peers[peer_key] = {
+		'path': path,
+		'peer_id': peer_id,
+		'port': port,
+		'ip': ip,
+	}
 
 	response = {
 		'peers': list(peers.values())
 	}
 
 	return jsonify(response)
+
+
+@app.route('/get_peers', methods=['GET'])
+def get_peers():
+	return jsonify(peers)
+
 #* ========================================================================
 
-
-
-app.run(host='0.0.0.0', port=8080, debug=False)
-
-while True:
-	update_peers()
-	time.sleep(5)
+if __name__ == '__main__':
+	app.run(host='0.0.0.0', port=8080, debug=False)
