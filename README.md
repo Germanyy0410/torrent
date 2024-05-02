@@ -66,7 +66,7 @@ python peer.py
 python main.py
 ```
 
-### Commands
+## IV. Commands
 
 •  ```b-create <path> <tracker-url>```: Create a .torrent file for the content at the specified path, with the given tracker URL.
 
