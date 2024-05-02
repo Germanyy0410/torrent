@@ -149,6 +149,11 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
 
+    elapsed_time = time.time() - start_time
+    hours, remainder = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    elapsed_time_str = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
+
     # Send request type
     req = "upload_request"
     request = {
@@ -166,13 +171,18 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     else:
         response = client_socket.recv(1024).decode('utf-8')
         if response == "False":
-            print(f"Uploading: Connect successfully to [{peer_ip}, {peer_port}].")
+            print("\n\nelapsed time: " + main.colors.YELLOW + elapsed_time_str + main.colors.RESET)
+            print("======================================================================================")
+            print(main.colors.RED + "Uploading:" + main.colors.RESET + f" Connected to [{peer_ip}, {peer_port}].")
+
+            print("Piece hash matched: {}".format(generate_piece_hash(sender_path)))
             # Send piece data
             if os.path.exists(sender_path):
                 with open(sender_path, 'rb') as file:
                     data = file.read()
                     client_socket.sendall(data)
-                    print("File '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
+                    print("\nFile '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
+            print("======================================================================================")
 
     client_socket.close()
     lock.release()
@@ -190,12 +200,11 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = receiver_path.split("/")[-1]
+
     elapsed_time = time.time() - start_time
     hours, remainder = divmod(elapsed_time, 3600)
     minutes, seconds = divmod(remainder, 60)
     elapsed_time_str = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-    print("elapsed time: ", elapsed_time_str)
-
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
@@ -216,17 +225,17 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
     current_pieces = get_existing_piece_num(receiver_path.rsplit("/", 1)[0], file_name.rsplit(".", 1)[0])
     os.system("cls")
     if piece_size != "":
-        print("\nelapsed time: ", elapsed_time_str)
-        print("\n===========================================================")
-        print(f"Downloading: Connected to [{peer_ip}, {peer_port}].")
+        print("\n\n\nelapsed time: " + main.colors.YELLOW + elapsed_time_str + main.colors.RESET)
+        print("======================================================================================")
+        print(main.colors.RED + "Downloading:" + main.colors.RESET + f" Connected to [{peer_ip}, {peer_port}].")
 
         progress_percent = int(current_pieces / int(total_pieces) * 100)
         max_progress_length = 60
         num_equals = min(int(progress_percent * max_progress_length / 100), max_progress_length)
         progress_bar_str = "|" + "=" * num_equals + "-" * (max_progress_length - num_equals) + "|"
 
-        print(f"\nFile: {file_name} ({current_pieces}/{total_pieces})\t\t{progress_bar_str}")
-        print(f"Piece: {piece_name} ({get_piece_size(int(piece_size))})\n")
+        print(f"\n•  File: {file_name} ({current_pieces}/{total_pieces})\t\t{progress_bar_str}")
+        print(f"•  Piece: {piece_name} ({get_piece_size(int(piece_size))})\n")
 
         # Receive file data
         with open(receiver_path, 'wb') as file:
@@ -244,7 +253,7 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
 
         merge_files(file_name.rsplit(".", 1)[0], receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file_name))
         # print(f"\n{piece_name} downloaded successfully.\n")
-        print("===========================================================")
+        print("\n======================================================================================")
     else:
         print("File {} does not existed in peer.".format(piece_name))
 
@@ -260,7 +269,6 @@ def download_torrent(peer, input: Input, torrent_name, threads):
     sender_folder = peer["path"]
 
     for file in input.files:
-
 
         file_name = file.file_name.rsplit(".", 1)[0]
         for part in file.pieces:
@@ -426,22 +434,19 @@ def listen_from_client():
 
 def merge_files(file_name, input_dir, output_file):
     parts = [part for part in os.listdir(input_dir) if part.endswith('.part') and file_name in part]
-    parts.sort(key=lambda x: int(x.split('_')[1].split(".")[0]))
+    parts.sort(key=lambda x: int(x.rsplit('_', 1)[1].split(".")[0]))
 
-    merged = False
     previous_number = None
     with open(output_file, 'wb') as f:
         for part in parts:
-            number = int(part.split('_')[1].split(".")[0])
+            number = int(part.rsplit('_', 1)[1].split(".")[0])
             if previous_number is None or number == previous_number + 1:
                 part_path = os.path.join(input_dir, part)
                 with open(part_path, 'rb') as p:
                     data = p.read()
                     f.write(data)
-                merged = True
                 previous_number = number
             else:
-                merged = False
                 break
 
 #* =========================================================================
