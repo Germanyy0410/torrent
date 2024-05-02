@@ -66,18 +66,18 @@ python peer.py
 python main.py
 ```
 
-## IV. Commands
+## IV. Basic Commands
 
-•  ```b-create <path> <tracker-url>```: Create a .torrent file for the content at the specified path, with the given tracker URL.
+- ```b-create <path> <tracker-url>```: Create a .torrent file for the content at the specified path, with the given tracker URL.
 
-•  ```b-show```: Display all managed torrent files, helping you keep track of your torrents easily.
+- ```b-show```: Display all managed torrent files, helping you keep track of your torrents easily.
 
-•  ```b-info <torrent-file>```: View metadata associated with a .torrent file, such as file names, sizes, and hash values.
+- ```b-info <torrent-file>```: View metadata associated with a .torrent file, such as file names, sizes, and hash values.
 
-•  ```b-start <torrent-file>```: Start downloading files from the specified .torrent file seamlessly.
+- ```b-start <torrent-file>```: Start downloading files from the specified .torrent file seamlessly.
 
-•  ```b-edit <torrent-file> <new-tracker-url>```: Modify the announce URL of a .torrent file, providing flexibility in managing torrents efficiently.
+- ```b-edit <torrent-file> <new-tracker-url>```: Modify the announce URL of a .torrent file, providing flexibility in managing torrents efficiently.
 
-•  ```b-help```: View all commands and usages.
+- ```b-help```: View all commands and usages.
 
-•  ```b-close```: Close the application.
+- ```b-close```: Close the application.
