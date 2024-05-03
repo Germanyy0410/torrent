@@ -400,7 +400,11 @@ def listen_from_client():
         # Upload
         elif client_request == 'upload_request':
             print("This is a upload request...")
+
             file_path = recv_input["receiver_path"]
+            file_name = recv_input["file_name"]
+            receiver_path = recv_input["receiver_path"].rsplit("/", 1)[0]
+            torrent_name = recv_input["torrent_name"]
 
             isPieceExisted = False
             if os.path.exists(file_path):
@@ -421,6 +425,9 @@ def listen_from_client():
                     progress_bar.close()
 
                 print(f"{file_path} is uploaded successfully...\n")
+                merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
+
+
 
         # Đóng kết nối với máy khách
         client_socket.close()
