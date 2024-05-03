@@ -141,7 +141,7 @@ def get_piece_size(piece_size):
     return piece_size
 
 
-def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
+def upload_piece(peer, torrent_name, file_name, file_full_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = sender_path.split("/")[-1]
@@ -165,7 +165,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
     request_json = json.dumps(request)
     client_socket.send(request_json.encode('utf-8'))
 
-    if verify_piece(torrent_name, file_name, sender_path) == False:
+    if verify_piece(torrent_name, file_full_name, sender_path) == False:
         print(f"Error: Piece {piece_name} has been modified, cannot upload to peer(s).")
     else:
         response = client_socket.recv(1024).decode('utf-8')
@@ -290,7 +290,7 @@ def download_torrent(peer, input: Input, torrent_name, threads):
 
                 lock.acquire()
 
-                thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file_name, sender_path, receiver_path))
+                thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path))
                 thread.start()
                 threads.append(thread)
 
