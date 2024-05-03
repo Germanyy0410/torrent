@@ -9,7 +9,6 @@ import hashlib
 from tqdm import tqdm
 import subprocess
 import main
-import pickle
 from prettytable import PrettyTable
 import time
 

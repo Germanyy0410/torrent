@@ -1,10 +1,8 @@
-import json
 from peer import *
 import os
 from bcoding import bdecode, bencode
 import hashlib
 import peer
-import pickle
 from tracker import *
 import requests
 from prettytable import PrettyTable
