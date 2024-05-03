@@ -354,12 +354,12 @@ def listen_from_client():
     server_socket.listen(1)
 
     while True:
-        print("Start listening...")
+        print("\n\nStart listening...")
         client_socket, client_address = server_socket.accept()
         recv_input_json = client_socket.recv(1024).decode('utf-8')
-        print(recv_input_json)
+        # print(recv_input_json)
         recv_input = json.loads(recv_input_json)
-        print("Recieved: torrent name & request.", recv_input)
+        # print("Recieved: torrent name & request.", recv_input)
 
         torrent_name = recv_input["torrent_name"]
         input = main.get_torrent_status(torrent_name)
@@ -372,8 +372,7 @@ def listen_from_client():
             # Receive file path & piece hashes
             file_path = recv_input["file_path"].replace('//', '/')
             file_name = recv_input["file_name"]
-            print("Received: file.", recv_input)
-
+            # print("Received: file.", recv_input)
 
             # Kiểm tra sự tồn tại của file và piece hash
             if os.path.exists(file_path):
