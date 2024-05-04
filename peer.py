@@ -144,7 +144,7 @@ def get_piece_size(piece_size):
     return piece_size
 
 
-def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
+def upload_piece(peer, torrent_name, full_file_name, file_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = sender_path.split("/")[-1]
@@ -162,7 +162,7 @@ def upload_piece(peer, torrent_name, file_name, sender_path, receiver_path):
         "torrent_name": str(torrent_name),
         "request": str(req),
         "receiver_path": str(receiver_path),
-        "file_name": str(file_name),
+        "file_name": str(full_file_name),
         "file_path": str(sender_path),
     }
     request_json = json.dumps(request)
@@ -335,7 +335,7 @@ def download_file(peer, file, torrent_name, table):
 
             # lock.acquire()
 
-            upload_piece(peer, torrent_name, file_name, sender_path, receiver_path)
+            upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
 
 
 def download_torrent(peers, input: Input, torrent_name):
