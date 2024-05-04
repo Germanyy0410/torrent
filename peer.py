@@ -515,7 +515,7 @@ def listen_from_client():
                     progress_bar.close()
 
                 print(f"{file_path} is uploaded successfully...\n")
-                merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name) + file_name.rsplit(".", 1)[1])
+                merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
 
 
 
