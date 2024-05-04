@@ -252,27 +252,27 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
                 file.write(data)
                 # progress_bar.update(len(data))
 
-                piece_percent = int(os.path.getsize(receiver_path) / int(piece_size) * 100)
-                max_length = 50
-                num_equal = min(int(piece_percent * max_length / 100), max_length)
-                progress_str = "|" + "=" * num_equal + "-" * (max_length - num_equal) + "|"
+                # piece_percent = int(os.path.getsize(receiver_path) / int(piece_size) * 100)
+                # max_length = 50
+                # num_equal = min(int(piece_percent * max_length / 100), max_length)
+                # progress_str = "|" + "=" * num_equal + "-" * (max_length - num_equal) + "|"
 
-                for row in table._rows:
-                    if file_name in row[0]:
-                        row[1] = f'{current_pieces}/{total_pieces}'
-                        row[2] = piece_name
-                        row[3] = peer_ip
-                        row[4] = peer_port
-                        row[5] = progress_str
-                        row[6] = ""
+                # for row in table._rows:
+                #     if file_name in row[0]:
+                #         row[1] = f'{current_pieces}/{total_pieces}'
+                #         row[2] = piece_name
+                #         row[3] = peer_ip
+                #         row[4] = peer_port
+                #         row[5] = progress_str
+                #         row[6] = ""
 
-                with print_lock:
-                    os.system("cls")
-                    print(table.get_string())
+                # with print_lock:
+                #     os.system("cls")
+                #     print(table.get_string())
 
             # progress_bar.close()
 
-        # print(output + "\n--------------------------------------------------------------------------------------")
+        print(output + "\n--------------------------------------------------------------------------------------")
         part.status = True
 
         merge_files(file_name.rsplit(".", 1)[0], receiver_path.rsplit("/", 1)[0], get_output_path(torrent_name, file_name))
@@ -341,7 +341,7 @@ def download_file(peer, file, torrent_name, table):
 def download_torrent(peers, input: Input, torrent_name):
     threads = []
     max_threads = len(peers)
-    semaphore = threading.Semaphore(max_threads)
+    # semaphore = threading.Semaphore(max_threads)
 
     table = PrettyTable(["file", "no .piece", "current piece", "ip", "port", "progress", "download speed"])
 
@@ -359,7 +359,7 @@ def download_torrent(peers, input: Input, torrent_name):
         peer = peer_list[0]
         peer_list = peer_list[1:]
 
-        semaphore.acquire()
+        # semaphore.acquire()
         thread =threading.Thread(target=download_file, args=(peer, file, torrent_name, table), name=file.file_name)
         thread.start()
         threads.append(thread)
@@ -515,7 +515,7 @@ def listen_from_client():
                     progress_bar.close()
 
                 print(f"{file_path} is uploaded successfully...\n")
-                merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
+                merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name) + file_name.rsplit(".", 1)[1])
 
 
 
