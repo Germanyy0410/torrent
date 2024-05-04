@@ -1,10 +1,8 @@
-import json
 from peer import *
 import os
 from bcoding import bdecode, bencode
 import hashlib
 import peer
-import pickle
 from tracker import *
 import requests
 from prettytable import PrettyTable
@@ -169,16 +167,7 @@ def get_peers_from_tracker():
 def torrent_start(torrent_name):
     peers = get_peers_from_tracker()
     input = get_torrent_status(torrent_name)
-
-    threads = []
-    # Connect client to peer(s)
-    for peer in peers.values():
-        thread = threading.Thread(target=download_torrent, args=(peer, input, torrent_name, threads))
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
+    download_torrent(peers, input, torrent_name)
 
 
 def torrent_info(torrent_name):
@@ -247,6 +236,18 @@ def user_input_thread():
                 print (colors.RED_BOLD + "\nSyntax Error: " + colors.RESET + "Command not found")
             else:
                 torrent_show()
+
+        elif "b-peer" in user_command:
+            if len(user_command.split(" ")) != 1:
+                print (colors.RED_BOLD + "\nSyntax Error: " + colors.RESET + "Command not found")
+
+            print("\nGetting peers from http://" + os.environ['CURRENT_IP'] + ":8080\n")
+            table = PrettyTable(['peer_id', 'IP', 'Port'])
+            peers = get_peers_from_tracker()
+
+            for peer in peers.values():
+                table.add_row([peer["peer_id"], peer["ip"], peer["port"]])
+            print(table.get_string())
 
         elif "b-info" in user_command:
             if len(user_command.split(" ")) != 2:
