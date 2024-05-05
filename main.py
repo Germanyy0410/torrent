@@ -155,7 +155,16 @@ def get_torrent_status(torrent_name):
         get_pieces_status(file_info, get_input_path(torrent_name) + "/parts/")
         input.files.append(file_info)
 
-    return input
+    bit_field = {}
+    for file in input.files:
+        bit_field[file.file_name] = ""
+        for piece in file.pieces:
+            if piece.status == True:
+                bit_field[file.file_name] += "1"
+            else:
+                bit_field[file.file_name] += "0"
+
+    return input, bit_field
 
 
 def get_peers_from_tracker():
@@ -166,7 +175,7 @@ def get_peers_from_tracker():
 
 def torrent_start(torrent_name):
     peers = get_peers_from_tracker()
-    input = get_torrent_status(torrent_name)
+    input, bit_field = get_torrent_status(torrent_name)
     download_torrent(peers, input, torrent_name)
 
 

@@ -214,6 +214,7 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((peer_ip, int(peer_port)))
 
+    #! 1
     req = "download_request"
     request = {
         "torrent_name": str(torrent_name),
@@ -224,6 +225,10 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
     }
     request_json = json.dumps(request)
     client_socket.send(request_json.encode('utf-8'))
+
+    #! 2
+    peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
+    peer_bit_field = json.loads(peer_bit_field_json)
 
     output = ""
     # Receive piece size
@@ -284,43 +289,32 @@ def download_piece(peer, part, torrent_name, file_name, sender_path, receiver_pa
     # lock.release()
 
 
-def get_files_progress(files, torrent_name, current_file):
-    table = PrettyTable(["File", "Progress"])
-    progress_bar = [tqdm(total=len(file.pieces), desc=f"Tiến trình {i.file_name}", unit="file", leave=False) for i in files]
-
-    for i, file in enumerate(files):
-        total_pieces = len(file.pieces)
-        current_pieces = 0
-        file_name = file.file_name.rsplit(".", 1)[0]
-        path = os.getcwd() + "\\input\\" + torrent_name + "\parts"
-
-        for part in os.listdir(path):
-            if file_name in part:
-                current_pieces += 1
-
-        progress_bar[i].update(1)
-    #     progress_percent = int(current_pieces / int(total_pieces) * 100)
-    #     max_progress_length = 60
-    #     num_equals = min(int(progress_percent * max_progress_length / 100), max_progress_length)
-    #     progress_bar_str = "|" + "=" * num_equals + "-" * (max_progress_length - num_equals) + "|"
-    #     if file.file_name == current_file:
-    #         progress_bar_str = main.colors.GREEN + progress_bar_str + main.colors.RESET
-    #     table.add_row([file.file_name, progress_bar_str])
-    # print(table.get_string())
-
-
 # lock = threading.Lock()
 start_time = time.time()
 
 
 def download_file(peer, file, torrent_name, table):
     sender_folder = peer["path"]
-
     file_name = file.file_name.rsplit(".", 1)[0]
+
+    peer_ip = peer["ip"]
+    peer_port = peer["port"]
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((peer_ip, int(peer_port)))
+
+    #* 1: Torrent name
+    client_socket.send(torrent_name.encode())
+
+    #* 2: Bit field
+    peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
+    peer_bit_field = json.loads(peer_bit_field_json)
+
+    client_socket.close()
+
     for part in file.pieces:
         total_pieces = len(file.pieces)
 
-        if not part.status:
+        if not part.status and peer_bit_field[file.file_name][part.piece_number - 1] == 1:
             sender_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
             receiver_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
@@ -329,13 +323,13 @@ def download_file(peer, file, torrent_name, table):
             download_piece(peer, part, torrent_name, file.file_name, sender_path, receiver_path, total_pieces, table)
             # get_files_progress(input.files, torrent_name, file.file_name)
 
-        else:
-            sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
-            receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
+        # else:
+        #     sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
+        #     receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
-            # lock.acquire()
+        #     # lock.acquire()
 
-            upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
+        #     upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
 
 
 def download_torrent(peers, input: Input, torrent_name):
@@ -429,30 +423,39 @@ def connect_to_tracker():
 #* ========================== LISTEN FROM CLIENT ===========================
 
 def listen_from_client():
-    # Tạo socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = get_peer_ip()
     port = 1234
+    server_socket.bind((host, port))
+    server_socket.listen(1)
 
     connect_to_tracker()
     print("Send response to tracker.")
 
-    # Liên kết socket với địa chỉ IP và số cổng
-    server_socket.bind((host, port))
+    client_socket, client_address = server_socket.accept()
 
-    # Lắng nghe kết nối đến từ máy khách
-    server_socket.listen(1)
+    #* 1: Torrent name
+    torrent_name = client_socket.recv(1024).decode()
+
+    #* 2: Bit field
+    input, bit_field = main.get_torrent_status(torrent_name)
+    bit_field_json = json.dumps(bit_field)
+    client_socket.send(bit_field_json.encode('utf-8'))
+
+    client_socket.close()
 
     while True:
         print("\n\nStart listening...")
         client_socket, client_address = server_socket.accept()
-        recv_input_json = client_socket.recv(1024).decode('utf-8')
-        # print(recv_input_json)
-        recv_input = json.loads(recv_input_json)
-        # print("Recieved: torrent name & request.", recv_input)
 
+        #! 1
+        recv_input_json = client_socket.recv(1024).decode('utf-8')
+        recv_input = json.loads(recv_input_json)
         torrent_name = recv_input["torrent_name"]
-        input = main.get_torrent_status(torrent_name)
+
+        #! 2
+        input, bit_field = main.get_torrent_status(torrent_name)
+
 
         client_request = recv_input["request"]
         # Download
@@ -516,8 +519,6 @@ def listen_from_client():
 
                 print(f"{file_path} is uploaded successfully...\n")
                 merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
-
-
 
         # Đóng kết nối với máy khách
         client_socket.close()
