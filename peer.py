@@ -303,7 +303,16 @@ def download_file(peer, file, torrent_name, table):
     client_socket.connect((peer_ip, int(peer_port)))
 
     #* 1: Torrent name
-    client_socket.send(torrent_name.encode())
+    req = "get_bitfield"
+    request = {
+        "torrent_name": str(torrent_name),
+        "request": str(req),
+        "receiver_path": str(""),
+        "file_name": str(""),
+        "file_path": str(""),
+    }
+    request_json = json.dumps(request)
+    client_socket.send(request_json.encode('utf-8'))
 
     #* 2: Bit field
     peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
@@ -432,18 +441,6 @@ def listen_from_client():
     connect_to_tracker()
     print("Send response to tracker.")
 
-    client_socket, client_address = server_socket.accept()
-
-    #* 1: Torrent name
-    torrent_name = client_socket.recv(1024).decode()
-
-    #* 2: Bit field
-    input, bit_field = main.get_torrent_status(torrent_name)
-    bit_field_json = json.dumps(bit_field)
-    client_socket.send(bit_field_json.encode('utf-8'))
-
-    client_socket.close()
-
     while True:
         print("\n\nStart listening...")
         client_socket, client_address = server_socket.accept()
@@ -455,7 +452,6 @@ def listen_from_client():
 
         #! 2
         input, bit_field = main.get_torrent_status(torrent_name)
-
 
         client_request = recv_input["request"]
         # Download
@@ -519,8 +515,10 @@ def listen_from_client():
 
                 print(f"{file_path} is uploaded successfully...\n")
                 merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
+        elif client_request == "get_bitfield":
+            bit_field_json = json.dumps(bit_field)
+            client_socket.send(bit_field_json.encode('utf-8'))
 
-        # Đóng kết nối với máy khách
         client_socket.close()
 
 #* =========================================================================
