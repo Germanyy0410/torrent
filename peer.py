@@ -414,8 +414,8 @@ def upload_file(peer, input: Input, torrent_name):
                 # threads.append(thread)
                 upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
 
-    for thread in threads:
-        thread.join()
+    # for thread in threads:
+    #     thread.join()
 
 
 def upload_torrent(peers, input: Input, torrent_name):
@@ -464,10 +464,11 @@ def get_time():
 
 def connect_to_tracker():
     peer_id = str(get_input_dir().replace("\\", "/")) + str(get_peer_ip())
-    print(peer_id)
+    print(peer_id + " " + random_port)
+    print(os.getcwd())
     peer_id_hash = hashlib.sha1(peer_id.encode()).hexdigest()
     torrent_info = {
-        "path": get_input_dir().replace("\\", "/"),
+        "path": os.getcwd(),
         "peer_id": peer_id_hash,
         "port": random_port,
         "ip": get_peer_ip(),

@@ -23,7 +23,7 @@ def announce():
 	port = request.args.get('port')
 	ip = request.args.get('ip')
 
-	peer_key = hashlib.sha1((peer_id + ip).encode()).hexdigest()
+	peer_key = hashlib.sha1((peer_id + ip + port).encode()).hexdigest()
 	peers[peer_key] = {
 		'path': path,
 		'peer_id': peer_id,
