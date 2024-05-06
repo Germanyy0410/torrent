@@ -252,7 +252,8 @@ def download_file(semaphore, peer, peers, old_peers, file, torrent_name, table, 
     client_socket.send(request_json.encode('utf-8'))
 
     #! 2: Bit field
-    peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
+    peer_bit_field_json = client_socket.recv(2048).decode('utf-8')
+    # print("\n\n\nDEBUG" + peer_bit_field_json)
     peer_bit_field = json.loads(peer_bit_field_json)
 
     client_socket.close()
@@ -376,8 +377,8 @@ def upload_piece(peer, torrent_name, full_file_name, file_name, sender_path, rec
 
 
 def upload_file(peer, input: Input, torrent_name):
+    threads = []
     sender_folder = peer["path"]
-
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -396,7 +397,7 @@ def upload_file(peer, input: Input, torrent_name):
     client_socket.send(request_json.encode('utf-8'))
 
     #! 2: Bit field
-    peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
+    peer_bit_field_json = client_socket.recv(2048).decode('utf-8')
     peer_bit_field = json.loads(peer_bit_field_json)
 
     client_socket.close()
@@ -407,8 +408,14 @@ def upload_file(peer, input: Input, torrent_name):
             if part.status and peer_bit_field[file.file_name][part.piece_number - 1] == "0":
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
-                upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
-                # peer_bit_field[file.file_name][part.piece_number - 1] = "1"
+
+                thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path))
+                thread.start()
+                threads.append(thread)
+                # upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
+
+    for thread in threads:
+        thread.join()
 
 
 def upload_torrent(peers, input: Input, torrent_name):
