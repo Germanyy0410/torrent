@@ -478,8 +478,8 @@ def listen_from_client():
     server_socket.bind((host, port))
     server_socket.listen(1)
 
-    connect_to_tracker()
-    print("Send response to tracker.")
+    # connect_to_tracker()
+    # print("Send response to tracker.")
 
     while True:
         print("\n\nStart listening...")
