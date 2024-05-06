@@ -453,9 +453,10 @@ def get_time():
 
 
 def connect_to_tracker():
+    peer_id_hash = hashlib.sha1((get_input_dir().replace("\\", "/") + get_peer_ip()).encode()).hexdigest()
     torrent_info = {
         "path": get_input_dir().replace("\\", "/"),
-        "peer_id": hashlib.sha1((get_input_dir().replace("\\", "/") + get_peer_ip()).encode().hexdigest()),
+        "peer_id": peer_id_hash,
         "port": 1234,
         "ip": get_peer_ip(),
         "event": "started"
