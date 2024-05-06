@@ -92,7 +92,7 @@ mkdir output/slides
 mkdir output/videos
 ```
 
-1. Start the local Tracker Server:
+4. Start the local Tracker Server:
 
 ```bash
 python tracker.py
