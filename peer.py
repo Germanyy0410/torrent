@@ -269,7 +269,7 @@ def download_file(semaphore, peer, peers, old_peers, file, torrent_name, table, 
             sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
             receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
             upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
-            peer_bit_field[file.file_name][part.piece_number - 1] = "1"
+            # peer_bit_field[file.file_name][part.piece_number - 1] = "1"
 
     isCompleted = True
     for part in file.pieces:
@@ -402,12 +402,12 @@ def upload_file(peer, input: Input, torrent_name):
 
     for file in input.files:
         file_name = file.file_name.rsplit(".", 1)[0]
-        for part in file.piece:
+        for part in file.pieces:
             if part.status and peer_bit_field[file.file_name][part.piece_number - 1] == "0":
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
-                peer_bit_field[file.file_name][part.piece_number - 1] = "1"
+                # peer_bit_field[file.file_name][part.piece_number - 1] = "1"
 
 
 def upload_torrent(peers, input: Input, torrent_name):
@@ -455,7 +455,7 @@ def get_time():
 def connect_to_tracker():
     torrent_info = {
         "path": get_input_dir().replace("\\", "/"),
-        "peer_id": "Ubuntu " + get_time(),
+        "peer_id": hashlib.sha1((get_input_dir().replace("\\", "/") + get_peer_ip()).encode().hexdigest()),
         "port": 1234,
         "ip": get_peer_ip(),
         "event": "started"
