@@ -468,7 +468,7 @@ def connect_to_tracker():
     print(random_port)
     peer_id_hash = hashlib.sha1(peer_id.encode()).hexdigest()
     torrent_info = {
-        "path": str(os.getcwd() + "input/"),
+        "path": str(os.getcwd() + "/input/"),
         "peer_id": peer_id_hash,
         "port": random_port,
         "ip": get_peer_ip(),
