@@ -82,19 +82,27 @@ git clone https://github.com/Germanyy0410/torrent.git
 pip install -r ref/requirements.txt
 ```
 
-3. Start the local Tracker Server:
+3. Create the following empty folders to store the completed files from our torrent files.
+
+```bash
+mkdir output/books
+mkdir output/slides
+mkdir output/videos
+```
+
+1. Start the local Tracker Server:
 
 ```bash
 python tracker.py
 ```
 
-4. Connect peer(s) to Tracker Server by:
+5. Connect peer(s) to Tracker Server by:
 
  ```bash
 python peer.py
 ```
 
-5. To start our main application, run:
+6. To start our main application, run:
 
  ```bash
 python main.py
