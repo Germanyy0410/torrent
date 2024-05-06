@@ -18,7 +18,7 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 
 # BitTorrent Application
 
-In our Computer Network Course - CO3093, a simple BitTorrent application was developed. This application includes features such as creating .torrent files, editing tracker URLs of .torrent files, and facilitating the download/upload of pieces from multiple clients.
+In our Computer Network Course - CO3093, we have developed a simple BitTorrent application. This application includes features such as creating .torrent files, editing tracker URLs of .torrent files, and facilitating the download/upload of pieces from multiple clients.
 
 ## Workflow
 
