@@ -87,13 +87,10 @@ def create_torrent(directory_path, tracker_url, piece_length=512 * 1024):
 
 def read_torrent(torrent_file_path):
     with open(torrent_file_path, 'rb') as torrent_file:
-        # Đọc dữ liệu từ file torrent
         torrent_data = torrent_file.read()
 
-        # Giải mã dữ liệu bằng bencode
         decoded_data = bdecode(torrent_data)
 
-        # Trích xuất thông tin cần thiết từ dữ liệu giải mã
         torrent_info = {
             'name': decoded_data['info']['name'],
             'piece_length': decoded_data['info']['piece length'],
@@ -101,12 +98,9 @@ def read_torrent(torrent_file_path):
             'info_hash': decoded_data['info']['info_hash'],
         }
 
-        # Khởi tạo dict lưu trữ tên file và danh sách mã hash của các piece
         file_piece_hashes = {}
 
-        # Kiểm tra xem torrent có nhiều file hay không
         if 'files' in decoded_data['info']:
-            # Trường hợp torrent chứa nhiều file
             file_info_list = decoded_data['info']['files']
             files = []
             for file_info in file_info_list:
@@ -118,12 +112,10 @@ def read_torrent(torrent_file_path):
                 file_name = file_info['name']
                 files.append({'path': file_path, 'name': file_name, 'length': file_length, 'num_pieces': file_num_pieces, 'pieces': file_pieces, 'file_hash': file_hash})
 
-                # Lưu trữ tên file và danh sách mã hash của các piece
                 file_piece_hashes[file_name] = [piece['hash'].hex() for piece in file_pieces]
 
             torrent_info['files'] = files
         else:
-            # Trường hợp torrent chỉ chứa một file
             file_path = torrent_info['name']
             file_name = file_path.split('/')[-1]
             file_length = decoded_data['info']['length']
@@ -131,16 +123,14 @@ def read_torrent(torrent_file_path):
             file_pieces = [{'hash': decoded_data['info']['pieces'][i:i+20], 'length': torrent_info['piece_length']} for i in range(0, len(decoded_data['info']['pieces']), 20)]
             torrent_info['files'] = [{'path': file_path, 'name': file_name, 'length': file_length, 'num_pieces': file_num_pieces, 'pieces': file_pieces}]
 
-            # Lưu trữ tên file và danh sách mã hash của các piece
             file_piece_hashes[file_name] = [piece['hash'].hex() for piece in file_pieces]
 
-    # Trả về thông tin torrent và dict chứa tên file và danh sách mã hash của các piece
     return torrent_info, file_piece_hashes
 
 
 def get_torrent_status(torrent_name):
     torrent_info, piece_hashes = read_torrent(get_torrent_path(torrent_name))
-    input = Input(torrent_name)
+    input = peer.Input(torrent_name)
     input.piece_hashes = piece_hashes
 
     for file in torrent_info["files"]:
@@ -151,11 +141,20 @@ def get_torrent_status(torrent_name):
         status = False
         if os.path.exists(file_path):
             status = True
-        file_info = File(file["name"], file["length"], file["num_pieces"], status)
-        get_pieces_status(file_info, get_input_path(torrent_name) + "/parts/")
+        file_info = peer.File(file["name"], file["length"], file["num_pieces"], status)
+        peer.get_pieces_status(file_info, get_input_path(torrent_name) + "/parts/")
         input.files.append(file_info)
 
-    return input
+    bit_field = {}
+    for file in input.files:
+        bit_field[file.file_name] = ""
+        for piece in file.pieces:
+            if piece.status == True:
+                bit_field[file.file_name] += "1"
+            else:
+                bit_field[file.file_name] += "0"
+
+    return input, bit_field
 
 
 def get_peers_from_tracker():
@@ -165,9 +164,16 @@ def get_peers_from_tracker():
 #* ========================================================================
 
 def torrent_start(torrent_name):
+    os.system("cls")
+    torrent_info(torrent_name)
+    time.sleep(1)
+    torrent_peer()
+    time.sleep(1)
+
     peers = get_peers_from_tracker()
-    input = get_torrent_status(torrent_name)
+    input, bit_field = get_torrent_status(torrent_name)
     download_torrent(peers, input, torrent_name)
+    upload_torrent(peers, input, torrent_name)
 
 
 def torrent_info(torrent_name):
@@ -195,6 +201,14 @@ def torrent_show():
 
     return torrent_files
 
+def torrent_peer():
+    print("\nGetting peers from http://" + os.environ['CURRENT_IP'] + ":8080\n")
+    table = PrettyTable([colors.YELLOW + 'peer_id' + colors.RESET, colors.YELLOW + 'IP' + colors.RESET, colors.YELLOW + 'Port' + colors.RESET])
+    peers = get_peers_from_tracker()
+
+    for peer in peers.values():
+        table.add_row([peer["peer_id"], peer["ip"], peer["port"]])
+    print(table.get_string())
 
 def torrent_edit_tracker_url(torrent_name, new_tracker_url):
     torrent_file_path = get_torrent_path(torrent_name)
@@ -240,14 +254,9 @@ def user_input_thread():
         elif "b-peer" in user_command:
             if len(user_command.split(" ")) != 1:
                 print (colors.RED_BOLD + "\nSyntax Error: " + colors.RESET + "Command not found")
+            else:
+                torrent_peer()
 
-            print("\nGetting peers from http://" + os.environ['CURRENT_IP'] + ":8080\n")
-            table = PrettyTable(['peer_id', 'IP', 'Port'])
-            peers = get_peers_from_tracker()
-
-            for peer in peers.values():
-                table.add_row([peer["peer_id"], peer["ip"], peer["port"]])
-            print(table.get_string())
 
         elif "b-info" in user_command:
             if len(user_command.split(" ")) != 2:
@@ -291,20 +300,21 @@ def user_input_thread():
 def print_input_help():
     print("\nSome useful commands you should use:\n")
     print("•  " + colors.BLUE + "b-create <path> <tracker-url>:" + colors.RESET + " Create a .torrent file for the content at the specified path, with the given tracker URL.\n")
+    print("•  " + colors.BLUE + "b-edit <torrent-file> <new-tracker-url>:" + colors.RESET + " Modify the announce URL of a .torrent file, providing flexibility in managing torrents efficiently.\n")
     print("•  " + colors.BLUE + "b-show:" + colors.RESET + " Display all managed torrent files, helping you keep track of your torrents easily.\n")
     print("•  " + colors.BLUE + "b-info <torrent-file>:" + colors.RESET + " View metadata associated with a .torrent file, such as file names, sizes, and hash values.\n")
+    print("•  " + colors.BLUE + "b-peer:" + colors.RESET + " View all peers that connected to tracker server.\n")
     print("•  " + colors.BLUE + "b-start <torrent-file>:" + colors.RESET + " Start downloading files from the specified .torrent file seamlessly.\n")
-    print("•  " + colors.BLUE + "b-edit <torrent-file> <new-tracker-url>:" + colors.RESET + " Modify the announce URL of a .torrent file, providing flexibility in managing torrents efficiently.\n")
     print("•  " + colors.BLUE + "b-help:" + colors.RESET + " View all commands and usages.\n")
     print("•  " + colors.BLUE + "b-close:" + colors.RESET + " Close the application.")
 
 
 if __name__ == '__main__':
     text_based = """
-                     ___  ___  _____   _____  ___   ___  ___  _  _  _____
-                    | _ )|_ _||_   _| |_   _|/ _ \ | _ \| __|| \| ||_   _|
-                    | _ \ | |   | |     | | | (_) ||   /| _| | .` |  | |
-                    |___/|___|  |_|     |_|  \___/ |_|_\|___||_|\_|  |_|
+                                             ___  ___  _____   _____  ___   ___  ___  _  _  _____
+                                            | _ )|_ _||_   _| |_   _|/ _ \ | _ \| __|| \| ||_   _|
+                                            | _ \ | |   | |     | | | (_) ||   /| _| | .` |  | |
+                                            |___/|___|  |_|     |_|  \___/ |_|_\|___||_|\_|  |_|
     """
     os.system("cls")
     print(colors.MAGENTA + text_based + colors.RESET)
