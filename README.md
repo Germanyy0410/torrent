@@ -29,7 +29,6 @@ We've set up a local tracker server using Flask framework to act as a crucial li
 - ```/announce```: This route handles GET requests from peers. When a peer sends a request here, the server extracts information and then adds the peer's information to a dictionary.
 - ```/get_peers```: This route also handles GET requests. When a client requests this endpoint, it receives the peer dictionary as JSON.
 
-
 ### 2. Active Peers
 
 To become an active peer, one must send a GET request to the Tracker Server, providing essential information such as peer_id, path, port, and IP address.
@@ -51,7 +50,6 @@ To become an active peer, one must send a GET request to the Tracker Server, pro
   - If a peer is missing pieces, initiate a new Thread.
   - Simultaneously begin uploading pieces from the client to all peers.
 
-
 ## Basic Commands
 
 - ```b-create <path> <tracker-url>```: Create a .torrent file for the content at the specified path, with the given tracker URL.
@@ -69,7 +67,6 @@ To become an active peer, one must send a GET request to the Tracker Server, pro
 - ```b-help```: View all commands and usages.
 
 - ```b-close```: Close the application.
-
 
 ## Getting Started
 
@@ -102,5 +99,3 @@ python peer.py
  ```bash
 python main.py
 ```
-
-
