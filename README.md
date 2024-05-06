@@ -46,8 +46,10 @@ To become an active peer, one must send a GET request to the Tracker Server, pro
   - If the file still lacks pieces, assign another peer to continue downloading.
 
 #### Upload
+
 - For every active peer:
   - If a peer is missing pieces, initiate a new Thread.
+  - Check the bit field for each file to determine which pieces are missing from the peer.
   - Simultaneously begin uploading pieces from the client to all peers.
 
 ## Basic Commands
