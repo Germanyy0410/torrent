@@ -1,3 +1,4 @@
+import random
 import requests # type: ignore
 import os
 from dotenv import load_dotenv # type: ignore
@@ -251,7 +252,8 @@ def download_file(semaphore, peer, peers, old_peers, file, torrent_name, table, 
     client_socket.send(request_json.encode('utf-8'))
 
     #! 2: Bit field
-    peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
+    peer_bit_field_json = client_socket.recv(2048).decode('utf-8')
+    # print("\n\n\nDEBUG" + peer_bit_field_json)
     peer_bit_field = json.loads(peer_bit_field_json)
 
     client_socket.close()
@@ -329,7 +331,7 @@ def download_torrent(peers, input: Input, torrent_name):
     print("Download Done!")
 
 
-def upload_piece(peer, torrent_name, full_file_name, file_name, sender_path, receiver_path):
+def upload_piece(peer, table, torrent_name, full_file_name, file_name, sender_path, receiver_path):
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     piece_name = sender_path.split("/")[-1]
@@ -358,25 +360,37 @@ def upload_piece(peer, torrent_name, full_file_name, file_name, sender_path, rec
     else:
         response = client_socket.recv(1024).decode('utf-8')
         if response == "False":
-            print("\n\nelapsed time: " + main.colors.YELLOW + elapsed_time_str + main.colors.RESET)
-            print("======================================================================================")
-            print(main.colors.RED + "Uploading:" + main.colors.RESET + f" Connected to [{peer_ip}, {peer_port}].")
+            # print("\n\nelapsed time: " + main.colors.YELLOW + elapsed_time_str + main.colors.RESET)
+            # print("======================================================================================")
+            # print(main.colors.RED + "Uploading:" + main.colors.RESET + f" Connected to [{peer_ip}, {peer_port}].")
 
-            print("Piece hash matched: {}".format(generate_piece_hash(sender_path)))
+            # print("Piece hash matched: {}".format(generate_piece_hash(sender_path)))
+
             # Send piece data
             if os.path.exists(sender_path):
                 with open(sender_path, 'rb') as file:
                     data = file.read()
                     client_socket.sendall(data)
-                    print("\nFile '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
-            print("======================================================================================")
+
+                for row in table._rows:
+                    if peer_ip in row[0] and peer_port in row[1]:
+                        row[2] = full_file_name
+                        row[3] = piece_name
+                        row[4] = generate_piece_hash(sender_path)
+                        row[5] = f'{piece_name} has uploaded successfully'
+
+                with print_lock:
+                    os.system("cls")
+                    print(table.get_string())
+            #         print("\nFile '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
+            # print("======================================================================================")
 
     client_socket.close()
 
 
-def upload_file(peer, input: Input, torrent_name):
+def upload_file(peer, table, input: Input, torrent_name):
+    threads = []
     sender_folder = peer["path"]
-
     peer_ip = peer["ip"]
     peer_port = peer["port"]
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -395,7 +409,7 @@ def upload_file(peer, input: Input, torrent_name):
     client_socket.send(request_json.encode('utf-8'))
 
     #! 2: Bit field
-    peer_bit_field_json = client_socket.recv(1024).decode('utf-8')
+    peer_bit_field_json = client_socket.recv(2048).decode('utf-8')
     peer_bit_field = json.loads(peer_bit_field_json)
 
     client_socket.close()
@@ -406,15 +420,26 @@ def upload_file(peer, input: Input, torrent_name):
             if part.status and peer_bit_field[file.file_name][part.piece_number - 1] == "0":
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
-                upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
-                # peer_bit_field[file.file_name][part.piece_number - 1] = "1"
+
+                # thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path))
+                # thread.start()
+                # threads.append(thread)
+                upload_piece(peer, table, torrent_name, file.file_name, file_name, sender_path, receiver_path)
+
+    # for thread in threads:
+    #     thread.join()
 
 
 def upload_torrent(peers, input: Input, torrent_name):
     threads = []
 
+    table = PrettyTable([main.colors.YELLOW + "peer ip" + main.colors.RESET, main.colors.YELLOW + "port" + main.colors.RESET, main.colors.YELLOW + "file name" + main.colors.RESET, main.colors.YELLOW + "current piece" + main.colors.RESET, main.colors.YELLOW + "piece hash" + main.colors.RESET, main.colors.YELLOW + "progress" + main.colors.RESET])
+
     for peer in peers.values():
-        thread = threading.Thread(target=upload_file, args=(peer, input, torrent_name), name=peer["peer_id"])
+        table.add_row([peer["ip"], peer["port"], "file", "_.part", "...", "..."])
+
+    for peer in peers.values():
+        thread = threading.Thread(target=upload_file, args=(peer, table, input, torrent_name), name=peer["peer_id"])
         thread.start()
         threads.append(thread)
 
@@ -427,6 +452,8 @@ def upload_torrent(peers, input: Input, torrent_name):
 
 
 #* ======================== CONNECT PEER TO TRACKER ========================
+
+random_port = random.randint(1000, 9999)
 
 def get_peer_ip():
     try:
@@ -455,11 +482,12 @@ def get_time():
 def connect_to_tracker():
     peer_id = str(get_input_dir().replace("\\", "/")) + str(get_peer_ip())
     print(peer_id)
+    print(random_port)
     peer_id_hash = hashlib.sha1(peer_id.encode()).hexdigest()
     torrent_info = {
-        "path": get_input_dir().replace("\\", "/"),
+        "path": str(os.getcwd() + "/input/"),
         "peer_id": peer_id_hash,
-        "port": 1234,
+        "port": random_port,
         "ip": get_peer_ip(),
         "event": "started"
     }
@@ -474,7 +502,7 @@ def connect_to_tracker():
 def listen_from_client():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = get_peer_ip()
-    port = 1234
+    port = random_port
     server_socket.bind((host, port))
     server_socket.listen(1)
 
@@ -555,6 +583,7 @@ def listen_from_client():
 
                 print(f"{file_path} is uploaded successfully...\n")
                 merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
+
         elif client_request == "get_bitfield":
             bit_field_json = json.dumps(bit_field)
             client_socket.send(bit_field_json.encode('utf-8'))
