@@ -358,18 +358,20 @@ def upload_piece(peer, torrent_name, full_file_name, file_name, sender_path, rec
     if verify_piece(torrent_name, file_name, sender_path) == False:
         print(f"Error: Piece {piece_name} has been modified, cannot upload to peer(s).")
     else:
-        print("\n\nelapsed time: " + main.colors.YELLOW + elapsed_time_str + main.colors.RESET)
-        print("======================================================================================")
-        print(main.colors.RED + "Uploading:" + main.colors.RESET + f" Connected to [{peer_ip}, {peer_port}].")
+        response = client_socket.recv(1024).decode('utf-8')
+        if response == "False":
+            print("\n\nelapsed time: " + main.colors.YELLOW + elapsed_time_str + main.colors.RESET)
+            print("======================================================================================")
+            print(main.colors.RED + "Uploading:" + main.colors.RESET + f" Connected to [{peer_ip}, {peer_port}].")
 
-        print("Piece hash matched: {}".format(generate_piece_hash(sender_path)))
-        # Send piece data
-        if os.path.exists(sender_path):
-            with open(sender_path, 'rb') as file:
-                data = file.read()
-                client_socket.sendall(data)
-                print("\nFile '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
-        print("======================================================================================")
+            print("Piece hash matched: {}".format(generate_piece_hash(sender_path)))
+            # Send piece data
+            if os.path.exists(sender_path):
+                with open(sender_path, 'rb') as file:
+                    data = file.read()
+                    client_socket.sendall(data)
+                    print("\nFile '{}' has been uploaded successfully...".format(sender_path.split("/")[-1]))
+            print("======================================================================================")
 
     client_socket.close()
 
@@ -407,10 +409,10 @@ def upload_file(peer, input: Input, torrent_name):
                 sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
                 receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
 
-                thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path))
-                thread.start()
-                threads.append(thread)
-                # upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
+                # thread = threading.Thread(target=upload_piece, args=(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path))
+                # thread.start()
+                # threads.append(thread)
+                upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
 
     for thread in threads:
         thread.join()
@@ -543,19 +545,26 @@ def listen_from_client():
             receiver_path = recv_input["receiver_path"].rsplit("/", 1)[0]
             torrent_name = recv_input["torrent_name"]
 
+            isPieceExisted = False
+            if os.path.exists(file_path):
+                isPieceExisted = True
 
-            with open(file_path, 'wb') as file:
-                progress_bar = tqdm(total=512 * 1024, unit='B', unit_scale=True)
-                while True:
-                    data = client_socket.recv(1024)
-                    if not data:
-                        break
-                    file.write(data)
-                    progress_bar.update(len(data))
-                progress_bar.close()
+            message = "True" if isPieceExisted else "False"
+            client_socket.send(message.encode('utf-8'))
 
-            print(f"{file_path} is uploaded successfully...\n")
-            merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
+            if message == "False":
+                with open(file_path, 'wb') as file:
+                    progress_bar = tqdm(total=512 * 1024, unit='B', unit_scale=True)
+                    while True:
+                        data = client_socket.recv(1024)
+                        if not data:
+                            break
+                        file.write(data)
+                        progress_bar.update(len(data))
+                    progress_bar.close()
+
+                print(f"{file_path} is uploaded successfully...\n")
+                merge_files(file_name.rsplit(".", 1)[0], receiver_path, get_output_path(torrent_name, file_name))
 
         elif client_request == "get_bitfield":
             bit_field_json = json.dumps(bit_field)
