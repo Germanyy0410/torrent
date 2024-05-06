@@ -166,9 +166,9 @@ def get_peers_from_tracker():
 def torrent_start(torrent_name):
     os.system("cls")
     torrent_info(torrent_name)
-    time.sleep(1)
+    time.sleep(2)
     torrent_peer()
-    time.sleep(1)
+    time.sleep(2)
 
     peers = get_peers_from_tracker()
     input, bit_field = get_torrent_status(torrent_name)
