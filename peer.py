@@ -267,10 +267,10 @@ def download_file(semaphore, peer, peers, old_peers, file, torrent_name, table, 
 
             download_piece(semaphore, peer, part, torrent_name, file.file_name, sender_path, receiver_path, total_pieces, table)
 
-        elif part.status and peer_bit_field[file.file_name][part.piece_number - 1] == "0":
-            sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
-            receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
-            upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
+        # elif part.status and peer_bit_field[file.file_name][part.piece_number - 1] == "0":
+        #     sender_path = os.path.join(f'D:/CN_Ass/input/{torrent_name}/parts/{file_name}_{part.piece_number}.part')
+        #     receiver_path = os.path.join(f'{sender_folder}{torrent_name}/parts/{file_name}_{part.piece_number}.part')
+        #     upload_piece(peer, torrent_name, file.file_name, file_name, sender_path, receiver_path)
             # peer_bit_field[file.file_name][part.piece_number - 1] = "1"
 
     isCompleted = True
@@ -279,7 +279,7 @@ def download_file(semaphore, peer, peers, old_peers, file, torrent_name, table, 
             isCompleted = False
             break
 
-    if not isCompleted or (isCompleted and "0" in peer_bit_field):
+    if not isCompleted:
         old_peers.append(peer)
 
         peer_list = []
@@ -388,7 +388,7 @@ def upload_piece(peer, table, torrent_name, full_file_name, file_name, sender_pa
     client_socket.close()
 
 
-def upload_file(peer, table, input: Input, torrent_name):
+def upload_peer(peer, table, input: Input, torrent_name):
     threads = []
     sender_folder = peer["path"]
     peer_ip = peer["ip"]
@@ -439,7 +439,7 @@ def upload_torrent(peers, input: Input, torrent_name):
         table.add_row([peer["ip"], peer["port"], "file", "_.part", "...", "..."])
 
     for peer in peers.values():
-        thread = threading.Thread(target=upload_file, args=(peer, table, input, torrent_name), name=peer["peer_id"])
+        thread = threading.Thread(target=upload_peer, args=(peer, table, input, torrent_name), name=peer["peer_id"])
         thread.start()
         threads.append(thread)
 
