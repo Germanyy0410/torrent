@@ -16,68 +16,91 @@ FACULTY OF COMPUTER SCIENCE AND ENGINEERING
 
 </div>
 
-# Torrent Application
+# BitTorrent Application
 
-An application created in Computer Network Course - CO3093
+In our Computer Network Course - CO3093, a simple BitTorrent application was developed. This application includes features such as creating .torrent files, editing tracker URLs of .torrent files, and facilitating the download/upload of pieces from multiple clients.
 
-## I. Module description
+## Workflow
 
-- ```main.py```: Main file to request download Torrent
-- ```tracker.py```: Start local tracker using Flask
-- ```peer.py```: Connect to tracker (run on Ubuntu)
+### 1. Tracker Server
 
-## II. Installation
+We've set up a local tracker server using Flask framework to act as a crucial link between peers. It keeps track of which files are available and who has them, helping peers connect and communicate more smoothly. Our tracker server has two main routes:
 
-To install all the required packages, run the following command:
+- ```/announce```: This route handles GET requests from peers. When a peer sends a request here, the server extracts information and then adds the peer's information to a dictionary.
+- ```/get_peers```: This route also handles GET requests. When a client requests this endpoint, it receives the peer dictionary as JSON.
 
-```bash
-pip install -r ref/requirements.txt
-```
 
-## III. Getting Started
+### 2. Active Peers
 
-1. Clone the repository:
+To become an active peer, one must send a GET request to the Tracker Server, providing essential information such as peer_id, path, port, and IP address.
 
-```bash
-git clone https://github.com/Germanyy0410/torrent.git
-```
+### 3. BitTorrent Client
 
-2. Naviagte to the project directory:
+- At first, client make a GET request to get all of active peers from Tracker Server.
 
-```bash
-cd torrent
-```
+#### Download
 
-3. Start the tracker:
+- For each file in .torrent file:
+  - Initialize a Thread and allocate a peer to download from.
+  - The client then requests the peer to send the file's bit field.
+  - Next, download all missing pieces from the peers concurrently.
+  - If the file still lacks pieces, assign another peer to continue downloading.
 
-```bash
-python tracker.py
-```
+#### Upload
+- For every active peer:
+  - If a peer is missing pieces, initiate a new Thread.
+  - Simultaneously begin uploading pieces from the client to all peers.
 
-4. Connect peer(s) to tracker by:
 
- ```bash
-python peer.py
-```
-
-5. To start download torrent, run:
-
- ```bash
-python main.py
-```
-
-## IV. Basic Commands
+## Basic Commands
 
 - ```b-create <path> <tracker-url>```: Create a .torrent file for the content at the specified path, with the given tracker URL.
+
+- ```b-edit <torrent-file> <new-tracker-url>```: Modify the announce URL of a .torrent file, providing flexibility in managing torrents efficiently.
 
 - ```b-show```: Display all managed torrent files, helping you keep track of your torrents easily.
 
 - ```b-info <torrent-file>```: View metadata associated with a .torrent file, such as file names, sizes, and hash values.
 
-- ```b-start <torrent-file>```: Start downloading files from the specified .torrent file seamlessly.
+- ```b-peer```: View all peers that connected to tracker server.
 
-- ```b-edit <torrent-file> <new-tracker-url>```: Modify the announce URL of a .torrent file, providing flexibility in managing torrents efficiently.
+- ```b-start <torrent-file>```: Start downloading files from the specified .torrent file seamlessly.
 
 - ```b-help```: View all commands and usages.
 
 - ```b-close```: Close the application.
+
+
+## Getting Started
+
+1. Clone my repository:
+
+```bash
+git clone https://github.com/Germanyy0410/torrent.git
+```
+
+2. Navigate to the project directory and install all the required packages:
+
+```bash
+pip install -r ref/requirements.txt
+```
+
+3. Start the local Tracker Server:
+
+```bash
+python tracker.py
+```
+
+4. Connect peer(s) to Tracker Server by:
+
+ ```bash
+python peer.py
+```
+
+5. To start our main application, run:
+
+ ```bash
+python main.py
+```
+
+
