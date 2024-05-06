@@ -1,3 +1,4 @@
+import random
 import requests # type: ignore
 import os
 from dotenv import load_dotenv # type: ignore
@@ -428,6 +429,8 @@ def upload_torrent(peers, input: Input, torrent_name):
 
 #* ======================== CONNECT PEER TO TRACKER ========================
 
+random_port = random.randint(1000, 9999)
+
 def get_peer_ip():
     try:
         output = subprocess.check_output(['hostname', '-I']).decode().strip()
@@ -459,7 +462,7 @@ def connect_to_tracker():
     torrent_info = {
         "path": get_input_dir().replace("\\", "/"),
         "peer_id": peer_id_hash,
-        "port": 1234,
+        "port": random_port,
         "ip": get_peer_ip(),
         "event": "started"
     }
@@ -474,7 +477,7 @@ def connect_to_tracker():
 def listen_from_client():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = get_peer_ip()
-    port = 1234
+    port = random_port
     server_socket.bind((host, port))
     server_socket.listen(1)
 
