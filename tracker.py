@@ -12,9 +12,11 @@ def get_ip():
     with open('.env', 'w') as env_file:
         env_file.write(f"CURRENT_IP={os.getenv('CURRENT_IP')}")
 
+
 app = Flask(__name__)
 if __name__ == '__main__':
 	get_ip()
+
 
 @app.route('/announce', methods=['GET'])
 def announce():
